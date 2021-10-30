@@ -7,7 +7,7 @@ import * as FS from 'fs';
 import { Global } from "../global";
 
 export function init() {
-   return MakeCommand;
+   return { class: MakeCommand, alias: 'm' };
 }
 
 export type argvName = 'name';
@@ -65,7 +65,6 @@ info('Play This Script by DAT!');
          return true;
       } catch (e) {
          errorLog('err4', 'bad make env');
-         console.error(e);
          return false;
       }
 

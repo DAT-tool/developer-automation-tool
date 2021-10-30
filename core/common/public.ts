@@ -2,6 +2,7 @@ import { CommandInput } from "./command-input";
 import * as PROCESS from 'process';
 import * as PATH from 'path';
 import * as FS from 'fs';
+import * as NET from 'net';
 import { FileInfo } from "./interfaces";
 /************************************************************* */
 export function log(text: string, label?: string, type: 'info' | 'error' | 'warning' | 'success' | 'normal' = 'normal', hasDateTime = true, end = '\n') {
@@ -39,11 +40,15 @@ export function messageLog(message: string, type: 'info' | 'error' | 'warning' |
    log(message, undefined, type, false, end);
 }
 /************************************************************* */
-export function errorLog(name: string, message: string) {
+export function errorLog(name: string, message: any) {
    log(message, name, 'error');
    let time = new Date().toTimeString().slice(0, 8);
    let date = new Date().toISOString().slice(0, 10).replace(/-/g, '.');
+
    try {
+      let Global = require("../global");
+      // =>if enable debug mode
+      if (Global.Global.isDebug && typeof message === 'object') console.error(message);
       // FS.writeFileSync(PATH.join(Settings.VARS_PATH, 'errors'), `[${date}-${time}] ${name} ${phone}::${message}\n`, {
       //    flag: 'a',
       // });
@@ -182,26 +187,52 @@ export async function sleep(ms = 1000) {
  */
 export function getFilesList(path: string, match?: RegExp) {
    let files: FileInfo[] = [];
-   const filesInDirectory = FS.readdirSync(path);
-   for (const file of filesInDirectory) {
-      // =>match search regex, if exist
-      if (match && !match.test(file)) continue;
-      const absolute = PATH.join(path, file);
-      // =>get stat of file
-      const stat = FS.statSync(absolute);
-      // =>add file
-      files.push({
-         path: absolute,
-         type: stat.isDirectory() ? 'dir' : 'file',
-         stat,
-      });
-      // =>if dir
-      if (stat.isDirectory()) {
-         const dirFiles = getFilesList(absolute, match);
-         for (const f of dirFiles) {
-            files.push(f);
+   try {
+      const filesInDirectory = FS.readdirSync(path);
+      for (const file of filesInDirectory) {
+         // =>match search regex, if exist
+         if (match && !match.test(file)) continue;
+         const absolute = PATH.join(path, file);
+         // =>get stat of file
+         const stat = FS.statSync(absolute);
+         // =>add file
+         files.push({
+            path: absolute,
+            type: stat.isDirectory() ? 'dir' : 'file',
+            stat,
+         });
+         // =>if dir
+         if (stat.isDirectory()) {
+            const dirFiles = getFilesList(absolute, match);
+            for (const f of dirFiles) {
+               files.push(f);
+            }
          }
       }
+   } catch (e) {
+      errorLog('er23', e);
    }
    return files;
+}
+/************************************************************* */
+export function randomInt(min: number, max: number) { // min and max included
+   return Math.floor(Math.random() * (max - min + 1) + min)
+}
+/************************************************************* */
+export async function checkPortInUse(port: number): Promise<boolean> {
+   return new Promise((res) => {
+      var server = NET.createServer(function (socket) {
+         socket.write('Echo server\r\n');
+         socket.pipe(socket);
+      });
+      server.on('error', function (e) {
+         res(true);
+      });
+      server.on('listening', function (e) {
+         server.close();
+         res(false);
+      });
+
+      server.listen(port, '127.0.0.1');
+   });
 }

@@ -1,50 +1,43 @@
-# KAT - Kimia Automation Tool (*V 0.3*)
+# DAT - Developer Automation Tool (*V 0.1*)
 
-KAT is a simple IT automation system. It handles configuration management and application deployment. KAT makes complex changes like zero-downtime rolling updates with load balancers easy.
-you can add custom modules to KAT and you LOVE it because you can write play scripts in typescript and compile it to json!
+DAT is a simple IT automation system for developers. It handles configuration management and application deployment.
+DAT can be run dependencies of your script.
+you can add multiple scripts and load them to main play script. and you LOVE it because you can write play scripts in typescript :)
 
 ## Design Principles
 
 - Have an extremely simple setup process with a minimal learning curve.
-- be agentless by leveraging the existing SSH daemon.
-- using json for describe play scripts
 - Allow module development
 - using typescript for generate play scripts
+- Providing useful libraries for helping
 
-## Available modules
+## Available libraries
 
-- [x] cmd: run a command on remote hosts
-- [x] watch: watch on a local directory changes  
-- [ ] git: run git commands on remote hosts
-- [ ] apt: run apt-get commands on remote debian-based hosts
-- [x] if: can use condition for more control on tasks nad outputs of them
-- [x] regex: can search and find on outputs of tasks with regex and decide
-- [ ] scp: upload files and directories with SFTP to remote hosts
-- [ ] docker: run docker commands on remote hosts
+- [ ] git: run git commands
+- [x] apt: run apt-get commands
+- [x] input: get types of input link select or text from user
+- [x] log: print output as different statuses
+- [x] os: provide useful functions
+- [x] play: for playing other scripts
 
 ## get-started
 
-just install with npm: `npm i kat-tool -g`
+just install with npm: `npm i dat-tool -g`
 
 ## hello world! sample
 
-- `kat make first_play`
+- `dat make first_play`
 - `cd first_play`
-- `kat compile`
-- `kat play`
+- `dat play`
 
 ## Roadmap
 
-- you need two files:
-  - hosts.json: list of remote hosts information (for ssh connection)
-  - play.json: a play script that run on specific remote hosts or all of them
-- you can create play.json by your self. but can use typescript (for now!) to generate it!
-- also you can define your hosts in typescript!
-- every module has a header in ts, that help you to create a play script on typescript as type-safe and developer-friendly :)
+- you need one file:
+  - play.ts: a play script that run your commands on typescript
 
 ## Authors
 
-KAT was created by madkne.
+DAT was created by madkne.
 
 ## License
 GNU General Public License v3.0 or later

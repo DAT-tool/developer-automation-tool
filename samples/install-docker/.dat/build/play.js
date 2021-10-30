@@ -41,18 +41,18 @@ var log_1 = require("@dat/lib/log");
 var apt_1 = require("@dat/lib/apt");
 var os_1 = require("os");
 var os_2 = require("@dat/lib/os");
-var process_1 = require("process");
-function main() {
+function main(argvs) {
     return __awaiter(this, void 0, void 0, function () {
         var distro;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
+                    console.log(argvs);
                     (0, log_1.info)('checking docker installed ...');
                     if (!((0, os_1.platform)() === 'linux')) return [3, 4];
                     if ((0, os_2.commandResult)('docker --version').indexOf('not found') === -1) {
                         (0, log_1.successStatus)('docker installed');
-                        (0, process_1.exit)(0);
+                        return [2, 0];
                     }
                     distro = (0, os_2.linuxDistribution)();
                     if (!(distro.name === 'debian' || distro.name === 'ubuntu')) return [3, 3];

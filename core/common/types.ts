@@ -1,4 +1,4 @@
 
-export type CommandType = 'compile' | 'help' | 'play' | 'profile' | 'make';
+export type CommandType = 'help' | 'play' | 'version' | 'make';
 
-export type baseArgvName = 'help';
+export type baseArgvName = 'help' | 'debug';

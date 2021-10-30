@@ -1,11 +1,11 @@
 import { CommandClass } from "../common/command";
-import { CommandModel, PlayModel } from "../common/interfaces";
+import { CommandModel } from "../common/interfaces";
 import * as PATH from 'path';
-import { deleteDirectory, errorLog, infoLog, messageLog } from "../common/public";
+import { deleteDirectory, errorLog, getFilesList, infoLog, messageLog } from "../common/public";
 import * as FS from 'fs';
 
 export function init() {
-   return HelpCommand;
+   return { class: HelpCommand, alias: 'h' };
 }
 
 
@@ -25,14 +25,15 @@ export class HelpCommand extends CommandClass {
    async run() {
       messageLog('Available Commands:', 'info', '\n\n');
       // =>search for all commands
-      const files = FS.readdirSync(__dirname, { withFileTypes: true });
+      const files = getFilesList(__dirname, /.*.js$/);
       for (const f of files) {
          try {
+            // console.log('command:', f)
             // =>init command class
-            const commandClass = await import(PATH.join(__dirname, f.name));
+            const commandClass = await import(f.path);
             // =>init command class
-            let cmd = new (commandClass['init']())() as CommandClass;
-            messageLog(cmd.name, 'warning', ' ');
+            let cmd = new (commandClass['init']()['class'])() as CommandClass;
+            messageLog(`${cmd.name} (${cmd.alias})`, 'warning', '\t');
             messageLog(cmd.description, 'normal');
          } catch (e) { }
       }

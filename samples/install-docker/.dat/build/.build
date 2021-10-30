@@ -1,7 +1,8 @@
 {
-  "started_at": 1635477117323,
-  "last_modified": 1635475483395.8938,
+  "started_at": 1635555562002,
+  "last_modified": 1635553317443.78,
   "filename": "play.ts",
   "ignore_compile": true,
-  "ready_ms": 20
+  "socket_port": 30512,
+  "ready_ms": 17
 }

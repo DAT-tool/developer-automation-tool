@@ -52,4 +52,11 @@ export interface BuildMetaData {
    ready_ms?: number; //time to ready to run play script
    ignore_compile?: boolean;
    started_at?: number;
+   socket_port?: number;
+}
+
+export interface EventData {
+   event: 'play';
+   name?: string; // used for 'play' event
+   argvs?: string[]; // used for 'play' event
 }

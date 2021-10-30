@@ -10,6 +10,7 @@ export abstract class CommandClass<A extends string = string> {
    alias: string = '';
    argvs: CommandArgvModel<A>[] = [];
    runArgvs: CommandRunArgv<A>[] = [];
+   allowUnknownArgvs = false;
    /**************************************** */
    constructor() {
       const def = this.define();
@@ -25,6 +26,11 @@ export abstract class CommandClass<A extends string = string> {
          alias: 'h',
          name: 'help',
          description: 'Shows a help message for this command in the console.',
+      });
+      def.argvs.push({
+         name: 'debug',
+         alias: 'ddd',
+         description: "enable debug mode",
       });
       this.argvs = def.argvs;
    }
@@ -87,6 +93,10 @@ export abstract class CommandClass<A extends string = string> {
    /**************************************** */
    async preRun(): Promise<boolean> {
       try {
+         // =>if debug argv
+         if (this.hasArgv('debug')) {
+            Global.isDebug = true;
+         }
          // =>if help argv
          if (this.hasArgv('help')) {
             this.helpArgv();
@@ -95,8 +105,7 @@ export abstract class CommandClass<A extends string = string> {
          // =>run command
          return await this.run();
       } catch (e) {
-         console.error(e);
-         errorLog('err653', 'error on run command: ' + e);
+         errorLog('err653', e);
          return false;
       }
    }
