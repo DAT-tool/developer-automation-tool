@@ -241,7 +241,7 @@ export async function runSudoCommand(command: string, password: string): Promise
    try {
       const sudo = require('./sudo-js');
       sudo.setPassword(password);
-      var commandSplit = command.split(' ');
+      var commandSplit = command.split(' ').filter(i => i.trim() !== '');
       return new Promise((res) => {
          sudo.exec(commandSplit, function (err, pid, result) {
             res([String(result), pid, err]);

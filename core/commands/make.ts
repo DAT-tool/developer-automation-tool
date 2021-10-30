@@ -56,8 +56,11 @@ export class MakeCommand extends CommandClass<argvName> {
          if (!FS.existsSync(PATH.join(this.path, 'play.ts'))) {
             FS.writeFileSync(PATH.join(this.path, 'play.ts'), `
 import { info } from "@dat/lib/log";
-
+export async function main(): Promise<number> {
 info('Play This Script by DAT!');
+
+return 0;
+}
             `.trim());
          }
          infoLog('make', `environment makes in '${this.path}'`);

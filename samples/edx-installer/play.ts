@@ -13,5 +13,5 @@ export async function main(argvs) {
    let res = await play('install-docker');
    info('result:' + res)
 
-   console.log(await exec('21e30fe54f0c', 'echo "hello"'));
+   console.log((await ps({ fields: ['ID', 'Image', 'Command'] })));
 }

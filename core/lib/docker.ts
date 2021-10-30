@@ -1,5 +1,6 @@
 import { execSync } from 'child_process';
-import { runSudoCommand } from '../common/public';
+import { errorLog, runSudoCommand } from '../common/public';
+import { warning } from './log';
 
 export type ServerDockerStatus = 'exist' | 'permitted' | 'notfound';
 
@@ -10,17 +11,32 @@ export type ServerDockerStatus = 'exist' | 'permitted' | 'notfound';
  */
 export async function ps(options: {
    all?: boolean;
-   // format?: string;
-   quiet?: boolean;
+   fields?: ('ID' | 'Image' | 'Command' | 'State' | 'Names' | 'CreatedAt' | 'RunningFor')[];
    sudoPassword?: string;
-} = { quiet: true }) {
+} = { fields: ['ID'] }): Promise<string[][]> {
    // =>generate command
+   let format = '';
    let command = 'docker ps ';
    if (options.all) command += '--all ';
-   if (options.quiet) command += '--quiet ';
+   if (!options.fields) options.fields = ['ID'];
+   // =>add fields
+   format = options.fields.map(i => `{{.${i}}}`).join('---');
+   command += `--format="${format}"`;
    // =>run command
    let result = await runDockerCommand(command, options.sudoPassword);
-   return result;
+   let containers = [];
+   // =>if normal, parse list
+   if (result.result && result.result.length > 3) {
+      let lines = result.result.split('\n').map(i => i.trim());
+      for (const line of lines) {
+         let segments = line.split('---').map(i => i.trim());
+         // =>if segments less than 2
+         if (segments.length < 2) continue;
+         // =>add container
+         containers.push(segments);
+      }
+      return containers;
+   }
 }
 /******************************************** */
 /**
@@ -78,10 +94,14 @@ export async function runDockerCommand(command: string, sudoPassword?: string) {
          status = 'permitted';
          let t1, t2;
          try {
+            // =>if sudo password, not set
+            if (!sudoPassword) {
+               warning('sudo password needs to run permitted docker commands');
+            }
             [result, t1, t2] = await runSudoCommand(command, sudoPassword);
-            // console.log('run sudo command with:', command, server.settings?.sudo_password, result);
+            // console.log('run sudo command with:', command, sudoPassword, result, t1, t2);
          } catch (e) {
-            error = String(e);
+            error = e;
          }
       }
       // =>if really error!
@@ -94,5 +114,6 @@ export async function runDockerCommand(command: string, sudoPassword?: string) {
       result,
       error,
       status,
+      command,
    };
 }
