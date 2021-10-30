@@ -47,7 +47,6 @@ function main(argvs) {
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    console.log(argvs);
                     (0, log_1.info)('checking docker installed ...');
                     if (!((0, os_1.platform)() === 'linux')) return [3, 4];
                     if ((0, os_2.commandResult)('docker --version').indexOf('not found') === -1) {

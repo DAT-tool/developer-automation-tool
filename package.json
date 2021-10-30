@@ -1,7 +1,7 @@
 {
   "name": "dat-tool",
   "description": "Developer automation tool command cli",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "author": "madkne",
   "keywords": [
     "automation",
@@ -31,7 +31,6 @@
     "dev": "concurrently \"tsc -b -w tsconfig.json\" \"nodemon dist/index.js\""
   },
   "dependencies": {
-    "sudo-js": "^1.0.2",
     "tslib": "^2.2.0",
     "typescript": "^4.0.2"
   },

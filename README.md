@@ -13,12 +13,13 @@ you can add multiple scripts and load them to main play script. and you LOVE it 
 
 ## Available libraries
 
-- [ ] git: run git commands
 - [x] apt: run apt-get commands
 - [x] input: get types of input link select or text from user
 - [x] log: print output as different statuses
 - [x] os: provide useful functions
 - [x] play: for playing other scripts
+- [x] docker: run docker commands
+- [ ] git: run git commands
 
 ## get-started
 

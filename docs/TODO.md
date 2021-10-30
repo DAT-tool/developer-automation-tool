@@ -14,4 +14,5 @@
 - [x] create version command
 - [x] use alias commands
 
-- [ ] publish DAT to npm
+- [x] publish DAT to npm
+- [x] create docker lib

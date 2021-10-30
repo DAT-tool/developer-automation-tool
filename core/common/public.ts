@@ -236,3 +236,19 @@ export async function checkPortInUse(port: number): Promise<boolean> {
       server.listen(port, '127.0.0.1');
    });
 }
+/************************************************************* */
+export async function runSudoCommand(command: string, password: string): Promise<[output: string, pid?: number, error?: any]> {
+   try {
+      const sudo = require('./sudo-js');
+      sudo.setPassword(password);
+      var commandSplit = command.split(' ');
+      return new Promise((res) => {
+         sudo.exec(commandSplit, function (err, pid, result) {
+            res([String(result), pid, err]);
+         });
+      });
+   } catch (e) {
+      errorLog('err354223', e);
+      return ['', 0, e];
+   }
+}
