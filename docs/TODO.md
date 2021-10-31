@@ -18,3 +18,7 @@
 - [x] add 'run' function to docker lib
 - [x] create git lib
 - [x] add 'exec' function to os lib
+
+- [x] add 'clear' function to log lib
+- [x] create 'run-tor' play script
+- [x] create systemctl lib

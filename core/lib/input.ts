@@ -8,4 +8,3 @@ export async function select(text: string, options: string[] | { text: string, v
 export async function input(text: string, defaultValue?: string): Promise<string> {
    return CommandInput.question(text, defaultValue);
 }
-/****************************************** */

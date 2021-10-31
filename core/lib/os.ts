@@ -1,6 +1,7 @@
 import { execSync, spawn } from 'child_process';
 import * as os from 'os';
 import * as fs from 'fs';
+import { error, successStatus } from './log';
 
 export type LinuxDistributionName = 'debian' | 'ubuntu' | 'opensuse-leap' | 'opensuse' | 'ManjaroLinux' | 'centos' | 'fedora' | 'redhat';
 
@@ -137,5 +138,29 @@ export async function exec(command: string | string[]): Promise<{ stdout?: strin
       child.on('close', (code) => {
          res({ stdout: stdout.trim(), stderr: stderr.trim(), code });
       });
+   });
+}
+/***************************************** */
+/**
+ * used for checking installed a command like git or docker
+ * @param command 
+ * @param successResult 
+ */
+export async function checkCommand(command: string, successResult?: string, errorResult?: string) {
+   let output = await exec(command);
+   if (output.code !== 0) {
+      if (errorResult) error(errorResult);
+      return false;
+   }
+   if (successResult && output.stdout.indexOf(successResult) === -1) {
+      if (errorResult) error(errorResult);
+      return false;
+   }
+   return true;
+}
+/***************************************** */
+export async function sleep(ms = 1000) {
+   return new Promise((resolve) => {
+      setTimeout(resolve, ms);
    });
 }

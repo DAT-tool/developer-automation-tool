@@ -4,9 +4,19 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { generateString } from "../common/public";
+import { exec } from "./os";
+import { error } from "./log";
 
-export async function install(packages: string[]) {
-   return execSync(`sudo apt-get install -y ${packages.join(' ')}`).toString();
+export async function install(packages: string[] | string, showOutput = false) {
+   if (typeof packages === 'string') {
+      packages = [packages];
+   }
+   let output = await exec(`sudo apt-get install -y ${packages.join(' ')}`);
+   if (showOutput) {
+      console.log(output.stdout);
+      if (output.stderr && output.stderr.length > 0) error(output.stderr);
+   }
+   return output;
 }
 /****************************************** */
 /**

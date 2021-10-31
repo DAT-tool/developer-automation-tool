@@ -1,3 +1,4 @@
+import { platform } from 'os';
 import { CommandInput } from '../common/command-input';
 import { messageLog } from '../common/public';
 
@@ -31,4 +32,21 @@ export function errorStatus(text, end = '\n') {
 /**************************************** */
 export function infoStatus(text, end = '\n') {
    CommandInput.statusLine(text, 'info', end);
+}
+/**************************************** */
+/**
+ * clear all screen
+ */
+export function clear() {
+   if (platform() === 'win32') {
+      process.stdout.write('\x1Bc');
+   } else if (platform() === 'linux') {
+      process.stdout.write('\x1Bc');
+   } else {
+      var lines = process.stdout.getWindowSize()[1];
+      for (var i = 0; i < lines; i++) {
+         process.stdout.write('\r\n');
+      }
+      process.stdout.cursorTo(0, 0);
+   }
 }

@@ -20,6 +20,7 @@ you can add multiple scripts and load them to main play script. and you LOVE it 
 - [x] play: for playing other scripts
 - [x] docker: run docker commands
 - [x] git: run git commands
+- [x] systemctl: run and Control the systemd system and service manager
 
 ## get-started
 

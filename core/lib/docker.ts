@@ -26,10 +26,14 @@ export async function ps(options: {
    // =>run command
    let result = await runDockerCommand(command, options.sudoPassword);
    let containers = [];
+   // console.log(result)
    // =>if normal, parse list
    if (result.result && result.result.length > 3) {
       let lines = result.result.split('\n').map(i => i.trim());
-      for (const line of lines) {
+      for (let line of lines) {
+         // =>remove quotations
+         if (line[0] === '\"' && line[line.length - 1] === '\"') line = line.substring(1, line.length - 1);
+         // =>split segments
          let segments = line.split('---').map(i => i.trim());
          // =>if segments less than 2
          if (segments.length < 2) continue;
