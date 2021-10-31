@@ -13,6 +13,8 @@
 - [x] set debug mode for play script
 - [x] create version command
 - [x] use alias commands
-
 - [x] publish DAT to npm
 - [x] create docker lib
+- [x] add 'run' function to docker lib
+- [x] create git lib
+- [x] add 'exec' function to os lib

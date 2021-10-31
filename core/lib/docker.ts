@@ -1,6 +1,7 @@
-import { execSync } from 'child_process';
+import { execSync, spawnSync } from 'child_process';
 import { errorLog, runSudoCommand } from '../common/public';
-import { warning } from './log';
+import { error, warning } from './log';
+import { exec as osExec } from './os';
 
 export type ServerDockerStatus = 'exist' | 'permitted' | 'notfound';
 
@@ -71,15 +72,73 @@ export async function cp(container: string, hostPath: string, containerPath: str
    return res;
 }
 /******************************************** */
+export async function run(imageName: string, options: {
+   sudoPassword?: string;
+   environmentVariables?: string[];
+   name?: string;
+   volumes?: string[];
+   exposePorts?: string[];
+} = {}) {
+   // =>generate command
+   let command = `docker run -d  `;
+   // =>set name
+   if (options.name) command += `--name="${options.name}"`;
+   // =>set env
+   if (options.environmentVariables) {
+      for (const env of options.environmentVariables) {
+         command += `--env="${env}"`;
+      }
+   }
+   // =>set volumes
+   if (options.volumes) {
+      for (const volume of options.volumes) {
+         if (volume.split(':').length < 2) {
+            warning(`invalid volume: ${volume}`);
+            continue;
+         }
+         command += `--volume="${volume}"`;
+      }
+   }
+   // =>set ports
+   if (options.exposePorts) {
+      for (const port of options.exposePorts) {
+         if (port.split(':').length < 2) {
+            warning(`invalid port: ${port}`);
+            continue;
+         }
+         command += `--p "${port}"`;
+      }
+   }
+
+   // =>add image name
+   command += ' ' + imageName;
+   // =>run command
+   let res = await runDockerCommand(command, options.sudoPassword);
+
+   return res;
+}
+/******************************************** */
 export async function runDockerCommand(command: string, sudoPassword?: string) {
    let result = '';
    let error;
    let isError = false;
    let status: ServerDockerStatus = 'exist';
+   // =>check docker installed
+   if (!await checkDockerInstalled()) {
+      return { status: 'notfound' };
+   }
    try {
-      result = execSync(command).toString();
+      let output = await osExec(command);
+      if (output.code === 0 && output.stdout && output.stdout.length > 0) {
+         result = output.stdout;
+      }
+      if (output.stderr && output.stderr.length > 0) {
+         isError = true;
+         result = output.stderr;
+      }
+      // console.log('ee:', output)
    } catch (e) {
-      // errorLog('err34533', String(e));
+      errorLog('err34533', e);
       isError = true;
       result = String(e);
    }
@@ -116,4 +175,13 @@ export async function runDockerCommand(command: string, sudoPassword?: string) {
       status,
       command,
    };
+}
+/******************************************** */
+export async function checkDockerInstalled() {
+   let output = await osExec(`docker --version`);
+   if (output.code !== 0 || output.stdout.indexOf('Docker version') === -1) {
+      error('Docker not installed!');
+      return false;
+   }
+   return true;
 }

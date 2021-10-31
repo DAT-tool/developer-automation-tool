@@ -1,8 +1,8 @@
 
-export const VERSION = "0.1.8";
+export const VERSION = "0.2.1";
 export const VERSION_NAME = 'BETA';
 
-const BETA_VERSION_STARTED = '2021.09.20';
+const BETA_VERSION_STARTED = '2021.10.28';
 
 
 export const MIN_NODE_VERSION = "12";

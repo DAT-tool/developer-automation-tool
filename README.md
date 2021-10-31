@@ -1,4 +1,4 @@
-# DAT - Developer Automation Tool (*V 0.1*)
+# DAT - Developer Automation Tool (*V 0.2*)
 
 DAT is a simple IT automation system for developers. It handles configuration management and application deployment.
 DAT can be run dependencies of your script.
@@ -19,7 +19,7 @@ you can add multiple scripts and load them to main play script. and you LOVE it 
 - [x] os: provide useful functions
 - [x] play: for playing other scripts
 - [x] docker: run docker commands
-- [ ] git: run git commands
+- [x] git: run git commands
 
 ## get-started
 
