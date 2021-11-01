@@ -18,7 +18,18 @@
 - [x] add 'run' function to docker lib
 - [x] create git lib
 - [x] add 'exec' function to os lib
-
 - [x] add 'clear' function to log lib
 - [x] create 'run-tor' play script
 - [x] create systemctl lib
+- [x] make command create as node app
+- [x] add package.json by make command
+- [x] create 'cwd' function to os lib
+- [x] create env lib
+- [x] add password input to input lib
+- [x] create 'shell' function to os lib
+
+- [ ] add 'playFromGit' to play lib
+- [ ] show statistics at end of play script
+- [ ] add more functions to systemctl lib
+- [ ] create npm lib
+- [ ] create ssh lib

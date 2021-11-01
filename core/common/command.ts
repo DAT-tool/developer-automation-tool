@@ -45,7 +45,10 @@ export abstract class CommandClass<A extends string = string> {
          const commandArgv = this.argvs.find(i => (argv.isAlias && i.alias === argv.key) || (i.name === argv.key));
          // =>if not found argv
          if (!commandArgv) {
-            warningLog('warn343', 'command argv name or alias not found: ' + argv.key);
+            // =>if not play command
+            if (this.name !== 'play') {
+               warningLog('warn343', 'command argv name or alias not found: ' + argv.key);
+            }
             continue;
          }
          // =>get argv value, if must

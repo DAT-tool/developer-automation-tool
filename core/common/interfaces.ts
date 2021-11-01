@@ -56,7 +56,12 @@ export interface BuildMetaData {
 }
 
 export interface EventData {
-   event: 'play';
+   event: 'play' | 'cwd';
    name?: string; // used for 'play' event
    argvs?: string[]; // used for 'play' event
+}
+
+export interface EventResponse {
+   status: number;
+   data?: any;
 }

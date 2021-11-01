@@ -4,7 +4,7 @@ import { messageLog } from './public';
 
 export namespace CommandInput {
    /**************************************** */
-   export function selectOptions(text: string, options: string[] | { text: string, value?: string }[], defaultOption?: string): Promise<string> {
+   export async function selectOptions(text: string, options: string[] | { text: string, value?: string }[], defaultOption?: string): Promise<string> {
       return new Promise((res) => {
          // =>init vars
          const selector = '*';
@@ -93,6 +93,57 @@ export namespace CommandInput {
             rl.close();
             if (def && (!input || input.trim().length < 1)) input = def;
             res(input);
+         });
+      });
+   }
+   /**************************************** */
+   export async function askPassword(text: string): Promise<string> {
+      if (text[text.length - 1] !== ' ') {
+         text += ' ';
+      }
+      return new Promise(res => {
+         let prompt = ansiColors('? ', 'green') + ansiColors(text, 'normal', true);
+         process.stdout.write(prompt);
+         var stdin = process.stdin;
+         stdin.resume();
+         stdin.setRawMode(true);
+         stdin.resume();
+         stdin.setEncoding('utf8');
+
+         var password = '';
+         stdin.on('data', (ch) => {
+            let ch1 = ch.toString('utf8');
+            switch (ch1) {
+               case "\n":
+               case "\r":
+               case "\u0004":
+                  // They've finished typing their password
+                  process.stdout.write('\n');
+                  stdin.setRawMode(false);
+                  stdin.pause();
+                  res(password);
+                  break;
+               case "\u0003":
+                  // Ctrl-C
+                  process.stdout.write('\n');
+                  stdin.setRawMode(false);
+                  stdin.pause();
+                  res('');
+                  break;
+               case String.fromCharCode(127):// BACKSPACE
+                  if (password.length === 0) return;
+                  password = password.slice(0, password.length - 1);
+                  process.stdout.clearLine(0);
+                  process.stdout.cursorTo(0);
+                  process.stdout.write(prompt);
+                  process.stdout.write(password.split('').map(() => '*').join(''));
+                  break;
+               default:
+                  // More password characters
+                  process.stdout.write('*');
+                  password += ch;
+                  break;
+            }
          });
       });
    }

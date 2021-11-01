@@ -1,34 +1,18 @@
 import * as net from 'net';
 import * as path from 'path';
+import { argv } from 'process';
 import { error } from './log';
+import { connectDatSocket } from './os';
 
-export let SocketPort: number;
+
 
 export async function play(name: string, argvs: string[] = [], debug = false): Promise<number> {
-   // console.log('port:', SocketPort);
-   return new Promise((res) => {
-      let client = net.connect(
-         {
-            port: SocketPort,
-            timeout: 30,
-         },
-         () => {
-         });
-      client.on('data', (data) => {
-         // console.log('[debug] client', data.toString());
-         client.end();
-         client.destroy();
-         res(Number(data));
-      })
-      client.on('connect', () => {
-         client.write(JSON.stringify({ event: 'play', name, argvs }));
-      });
-      client.once('close', () => res(101));
-      client.once('error', (e) => {
-         if (debug) error(e.message);
-         res(100);
-      });
-   });
+   let res = await connectDatSocket({
+      event: 'play',
+      name,
+      argvs,
+   }, debug);
+   return res.status;
 }
 /***************************************** */
 export async function playFromGit(url: string) {

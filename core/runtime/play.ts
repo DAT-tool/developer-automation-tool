@@ -5,6 +5,7 @@ import * as PATH from 'path';
 import * as TS from 'typescript';
 import * as NET from 'net';
 import { checkPortInUse, errorLog, messageLog, randomInt } from "../common/public";
+import { Global } from '../global';
 
 
 export class PlayScript {
@@ -68,8 +69,8 @@ export class PlayScript {
          // =>inject 'initialize' function to script
          FS.writeFileSync(this.tmpPlayPath, FS.readFileSync(this.playPath) + `
 function initialize() {
-var play = require('@dat/lib/play');
-play.SocketPort = ${this.socketPort}; 
+var dat_os = require('@dat/lib/os');
+dat_os.SocketPort = ${this.socketPort};
 }
 exports.initialize = initialize;
       `);
@@ -107,6 +108,7 @@ exports.initialize = initialize;
    /**************************************** */
    async compileTsFile() {
       try {
+         // console.log(Global.dirPath, Global.pwd)
          const options: TS.CompilerOptions = {
             target: TS.ScriptTarget.ES5,
             module: TS.ModuleKind.CommonJS,
@@ -118,6 +120,16 @@ exports.initialize = initialize;
             types: ['node'],
             sourceRoot: this.pwd,
             outDir: this.buildPath,
+            resolveJsonModule: true,
+            disableSizeLimit: true,
+            moduleResolution: TS.ModuleResolutionKind.NodeJs,
+            // rootDirs: [Global.dirPath],
+            // baseUrl: Global.pwd,
+            // rootDir: Global.pwd,
+            // paths: {
+            //    '*': [Global.dirPath + '/*'],
+            //    "dat/*": [Global.dirPath + '/*'],
+            // },
          };
          //=>clear old js file
          if (FS.existsSync(this.playPath)) {
@@ -180,6 +192,10 @@ exports.initialize = initialize;
                if (eventData.event === 'play') {
                   let response = await this.runPlayEvent(eventData.name, eventData.argvs);
                   socket.write(String(response));
+               }
+               // =>if 'cwd' event
+               else if (eventData.event === 'cwd') {
+                  socket.write(Global.pwd);
                }
             } catch (e) {
                errorLog('err451', e);
