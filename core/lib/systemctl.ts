@@ -5,40 +5,31 @@ export type UnitCommand = 'start' | 'status' | 'stop' | 'restart' | 'enable' | '
 
 export type ServiceStatus = 'active' | 'failed' | 'inactive';
 
-/****************************************** */
-export async function restart(service: string, options: {
+export interface SystemctlOptions {
    sudoPassword: string;
-}): Promise<{ output?: string; error?: string }> {
+}
+/****************************************** */
+export async function restart(service: string, options: SystemctlOptions): Promise<{ output?: string; error?: string }> {
    return await serviceAction('restart', service, options);
 }
 /****************************************** */
-export async function start(service: string, options: {
-   sudoPassword: string;
-}): Promise<{ output?: string; error?: string }> {
+export async function start(service: string, options: SystemctlOptions): Promise<{ output?: string; error?: string }> {
    return await serviceAction('start', service, options);
 }
 /****************************************** */
-export async function stop(service: string, options: {
-   sudoPassword: string;
-}): Promise<{ output?: string; error?: string }> {
+export async function stop(service: string, options: SystemctlOptions): Promise<{ output?: string; error?: string }> {
    return await serviceAction('stop', service, options);
 }
 /****************************************** */
-export async function disable(service: string, options: {
-   sudoPassword: string;
-}): Promise<{ output?: string; error?: string }> {
+export async function disable(service: string, options: SystemctlOptions): Promise<{ output?: string; error?: string }> {
    return await serviceAction('disable', service, options);
 }
 /****************************************** */
-export async function enable(service: string, options: {
-   sudoPassword: string;
-}): Promise<{ output?: string; error?: string }> {
+export async function enable(service: string, options: SystemctlOptions): Promise<{ output?: string; error?: string }> {
    return await serviceAction('enable', service, options);
 }
 /****************************************** */
-export async function status(service: string, options: {
-   sudoPassword: string;
-}): Promise<{ status?: ServiceStatus; output?: string; error?: string }> {
+export async function status(service: string, options: SystemctlOptions): Promise<{ status?: ServiceStatus; output?: string; error?: string }> {
    let status: ServiceStatus;
    let output = await runSystemctlCommands('status', service, options.sudoPassword);
    if (!output) return {};
@@ -64,9 +55,7 @@ export async function checkSystemctlInstalled() {
 /****************************************** */
 /****************************************** */
 /****************************************** */
-async function serviceAction(action: UnitCommand, service: string, options: {
-   sudoPassword: string;
-}): Promise<{ output?: string; error?: string }> {
+async function serviceAction(action: UnitCommand, service: string, options: SystemctlOptions): Promise<{ output?: string; error?: string }> {
    let output = await runSystemctlCommands(action, service, options.sudoPassword);
    if (!output) return {};
    return {

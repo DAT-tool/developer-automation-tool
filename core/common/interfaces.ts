@@ -1,6 +1,7 @@
 
 import { baseArgvName, CommandType } from "./types";
 import * as FS from 'fs';
+import { SSHConnection } from "../runtime/ssh";
 
 
 
@@ -50,18 +51,41 @@ export interface BuildMetaData {
    compile_ms?: number;
    complied_at?: number;
    ready_ms?: number; //time to ready to run play script
+   ready_at?: number;
    ignore_compile?: boolean;
    started_at?: number;
    socket_port?: number;
 }
 
 export interface EventData {
-   event: 'play' | 'cwd';
-   name?: string; // used for 'play' event
+   event: 'play' | 'cwd' | 'settings' | 'ssh';
+   name?: string; // used for 'play', 'settings' event
    argvs?: string[]; // used for 'play' event
+   options?: {}; // used for 'ssh' event
 }
 
 export interface EventResponse {
    status: number;
    data?: any;
+}
+export interface PlayScriptSettings {
+   show_statistics?: boolean;
+}
+
+export interface ExecResponse {
+   stdout?: string;
+   stderr?: string;
+   code: number;
+}
+
+export interface SSHConfig {
+   host?: string;
+   port?: number;
+   username?: string;
+   password?: string;
+   privateKey?: string;
+}
+
+export interface SSHHostConfig extends SSHConfig {
+   connection?: SSHConnection;
 }

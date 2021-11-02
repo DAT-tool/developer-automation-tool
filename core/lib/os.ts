@@ -3,10 +3,13 @@ import * as os from 'os';
 import * as fs from 'fs';
 import * as net from 'net';
 import * as path from 'path';
-import { error, successStatus } from './log';
-import { EventData, EventResponse } from '../common/interfaces';
+import { error, debug, successStatus } from './log';
+import { EventData, EventResponse, ExecResponse } from '../common/interfaces';
+import { ReturnStatusCode } from '../common/types';
+import { outputStreamExec, execCommandSplitter, spawnExec } from '../common/public';
 
 export let SocketPort: number;
+export let DebugMode = false;
 export let currentWorkingPath: string;
 /***************************************** */
 export type LinuxDistributionName = 'debian' | 'ubuntu' | 'opensuse-leap' | 'opensuse' | 'ManjaroLinux' | 'centos' | 'fedora' | 'redhat';
@@ -96,54 +99,30 @@ export function linuxDistribution(): { name?: LinuxDistributionName; version?: s
 }
 /***************************************** */
 export function commandSplitter(command: string) {
-   let commands: string[] = [];
-   let isStr = false;
-   let buffer = '';
-   for (let i = 0; i < command.length; i++) {
-      // =>is str
-      if ((i === 0 || command[i - 1] !== '\\') && (command[i] === '\"' || command[i] === '\'')) isStr = !isStr;
-      // =>if space
-      if (!isStr && command[i] === ' ') {
-         if (buffer.trim().length > 0) {
-            commands.push(buffer.trim());
-         }
-         buffer = '';
-         continue;
-      }
-      // =>save on buffer
-      buffer += command[i];
-   }
-   if (buffer.trim().length > 0) {
-      commands.push(buffer.trim());
-   }
-   return commands;
+   return execCommandSplitter(command);
 }
 /***************************************** */
-export async function exec(command: string | string[]): Promise<{ stdout?: string; stderr?: string; code: number; }> {
-   // =>if command not split, split it!
-   if (typeof command === 'string') {
-      command = commandSplitter(command);
-   }
-   if (!Array.isArray(command) || command.length < 1) return { code: 1000 };
-   return new Promise((res) => {
-      let stdout = '';
-      let stderr = '';
-      //kick off process of listing files
-      var child = spawn(command[0], (command as string[]).slice(1));
-
-      //spit stdout to screen
-      child.stdout.on('data', (data: string) => {
-         stdout += data.toString() + '\n';
-      });
-
-      //spit stderr to screen
-      child.stderr.on('data', (data: string) => {
-         stderr += data.toString() + '\n';
-      });
-
-      child.on('close', (code) => {
-         res({ stdout: stdout.trim(), stderr: stderr.trim(), code });
-      });
+export async function exec(command: string | string[]): Promise<ExecResponse> {
+   let stdout = '';
+   let stderr = '';
+   return await spawnExec(command, async (type, data, child) => {
+      // =>if stdout
+      if (type === 'stdout') {
+         // console.log('data:', String(data))
+         stdout += String(data) + '\n';
+      }
+      // =>if stderr
+      else if (type === 'stderr') {
+         // console.log('data:', String(data))
+         stderr += String(data) + '\n';
+      }
+      // =>if close
+      else if (type === 'close' || type === 'error') {
+         let code = ReturnStatusCode.EXEC_ERROR;
+         if (type === 'close') code = Number(String(data));
+         return { code, stdout: stdout.trim(), stderr: stderr.trim() };
+      }
+      return undefined;
    });
 }
 /***************************************** */
@@ -158,7 +137,7 @@ export async function checkCommand(command: string, successResult?: string, erro
       if (errorResult) error(errorResult);
       return false;
    }
-   if (successResult && output.stdout.indexOf(successResult) === -1) {
+   if (successResult && output.stdout.indexOf(successResult) === -1 && output.stderr.indexOf(successResult) === -1) {
       if (errorResult) error(errorResult);
       return false;
    }
@@ -172,16 +151,7 @@ export async function sleep(ms = 1000) {
 }
 /***************************************** */
 export async function shell(command: string, cwd?: string): Promise<number> {
-   return new Promise((res) => {
-      // =>split command
-      let cmds = commandSplitter(command);
-      // =>run command by spawn
-      let exe = spawn(cmds[0], cmds.slice(1), { shell: true, cwd, stdio: 'inherit' });
-      // =>when finished command
-      exe.on('exit', function (code) {
-         res(code);
-      });
-   });
+   return await outputStreamExec(command, cwd);
 }
 /***************************************** */
 export async function cwd() {
@@ -198,7 +168,12 @@ export async function cwd() {
    return currentWorkingPath;
 }
 /***************************************** */
-export async function connectDatSocket(event: EventData, debug = false): Promise<EventResponse> {
+export async function connectDatSocket(event: EventData): Promise<EventResponse> {
+   // =>check socket port exist
+   if (!SocketPort) {
+      debug('socket port not defined, so can not create socket to connect to DAT!');
+      return { status: ReturnStatusCode.DAT_SOCKET_BAD_PORT }
+   }
    return new Promise((res) => {
       let client = net.connect(
          {
@@ -211,15 +186,23 @@ export async function connectDatSocket(event: EventData, debug = false): Promise
          // console.log('[debug] client', data.toString());
          client.end();
          client.destroy();
-         res({ status: 0, data });
+         res({ status: ReturnStatusCode.SUCCESS, data });
       })
       client.on('connect', () => {
          client.write(JSON.stringify(event));
       });
-      client.once('close', () => res({ status: 101 }));
+      client.once('close', () => res({ status: ReturnStatusCode.DAT_SOCKET_CLOSE }));
       client.once('error', (e) => {
-         if (debug) error(e.message);
-         res({ status: 100 });
+         debug(e.message);
+         res({ status: ReturnStatusCode.DAT_SOCKET_ERROR });
       });
    });
+}
+/***************************************** */
+export async function rmdir(path) {
+   if (fs.existsSync(path)) {
+      fs.rmdirSync(path, { recursive: true });
+      return true;
+   }
+   return false;
 }

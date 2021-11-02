@@ -12,7 +12,7 @@ export function init() {
    return { class: PlayCommand, alias: 'p' };
 }
 
-export type argvName = 'filename';
+export type argvName = 'filepath';
 
 /******************************************* */
 export class PlayCommand extends CommandClass<argvName> {
@@ -25,17 +25,26 @@ export class PlayCommand extends CommandClass<argvName> {
          alias: 'p',
          argvs: [
             {
-               name: 'filename',
+               name: 'filepath',
                alias: 'f',
-               description: "filename of play script file",
+               description: "relative or absolute path of play script file",
             },
          ],
       };
    }
    /********************************** */
    async run() {
+      let path = Global.pwd;
+      let filename = 'play.ts';
+      // =>overwrite path, if exist
+      if (this.hasArgv('filepath')) {
+         let _path = PATH.resolve(this.getArgv('filepath'));
+         path = PATH.dirname(_path);
+         filename = PATH.basename(_path);
+      }
+      // console.log(path, filename)
       // =>check exist 'node_modules'
-      if (!FS.existsSync(PATH.join(Global.pwd, 'node_modules'))) {
+      if (!FS.existsSync(PATH.join(path, 'node_modules'))) {
          // =>init make class
          let makeClass = new MakeCommand();
          if (!await makeClass.preRun()) {
@@ -43,7 +52,7 @@ export class PlayCommand extends CommandClass<argvName> {
          }
       }
       // =>create instance of play class
-      let playClass = new PlayScript(Global.pwd, this.getArgv('filename', 'play.ts'));
+      let playClass = new PlayScript(path, filename);
       // =>run play class
       let res = await playClass.play(process.argv.slice(3) ?? []);
       if (res === 0) return true;

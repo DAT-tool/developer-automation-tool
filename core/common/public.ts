@@ -3,7 +3,9 @@ import * as PROCESS from 'process';
 import * as PATH from 'path';
 import * as FS from 'fs';
 import * as NET from 'net';
-import { FileInfo } from "./interfaces";
+import { ExecResponse, FileInfo } from "./interfaces";
+import { ChildProcessWithoutNullStreams, spawn, SpawnOptions, SpawnOptionsWithoutStdio } from "child_process";
+import { ReturnStatusCode } from "./types";
 /************************************************************* */
 export function log(text: string, label?: string, type: 'info' | 'error' | 'warning' | 'success' | 'normal' = 'normal', hasDateTime = true, end = '\n') {
    let time = new Date().toTimeString().slice(0, 8);
@@ -251,4 +253,123 @@ export async function runSudoCommand(command: string, password: string): Promise
       errorLog('err354223', e);
       return ['', 0, e];
    }
+}
+/************************************************************* */
+export function execCommandSplitter(command: string) {
+   let commands: string[] = [];
+   let isStr = false;
+   let buffer = '';
+   for (let i = 0; i < command.length; i++) {
+      // =>is str
+      if ((i === 0 || command[i - 1] !== '\\') && (command[i] === '\"' || command[i] === '\'')) isStr = !isStr;
+      // =>if space
+      if (!isStr && command[i] === ' ') {
+         if (buffer.trim().length > 0) {
+            commands.push(buffer.trim());
+         }
+         buffer = '';
+         continue;
+      }
+      // =>save on buffer
+      buffer += command[i];
+   }
+   if (buffer.trim().length > 0) {
+      commands.push(buffer.trim());
+   }
+   return commands;
+}
+/************************************************************* */
+export async function outputStreamExec(command: string, cwd?: string): Promise<number> {
+   return new Promise((res) => {
+      // =>split command
+      let cmds = execCommandSplitter(command);
+      // =>run command by spawn
+      let exe = spawn(cmds[0], cmds.slice(1), { shell: true, cwd, stdio: 'inherit' });
+      // =>when finished command
+      exe.on('exit', function (code) {
+         res(code);
+      });
+   });
+}
+/************************************************************* */
+export function convertMSToHumanly(ms: number) {
+   let units = ['ms', 'sec', 'min', 'hr'];
+   let i = 0;
+   // tslint:disable-next-line: prefer-for-of
+   while (true) {
+      if (units[i] === 'ms') {
+         if (ms < 1000) break;
+         ms /= 1000;
+         i++;
+      }
+      else if (units[i] === 'sec' || units[i] === 'min') {
+         if (ms < 60) break;
+         ms /= 60;
+         i++;
+      }
+      else if (units[i] === 'hr') {
+         if (ms < 24) break;
+         ms /= 24;
+         i++;
+      } else if (units[i] === 'd') {
+         if (ms < 7) break;
+         ms /= 7;
+         i++;
+      } else {
+         break;
+      }
+      ms = Number(ms.toFixed(1));
+      if (i >= units.length) break;
+   }
+   return { unit: units[i], time: ms };
+}
+/************************************************************* */
+export async function spawnExec(
+   command: string | string[],
+   callback: (
+      type: 'stdout' | 'stderr' | 'error' | 'close',
+      data: any,
+      child: ChildProcessWithoutNullStreams
+   ) => Promise<ExecResponse>,
+   options?: SpawnOptions): Promise<ExecResponse> {
+   // =>if command not split, split it!
+   if (typeof command === 'string') {
+      command = execCommandSplitter(command);
+   }
+   // =>if not valid command
+   if (!Array.isArray(command) || command.length < 1) return { code: ReturnStatusCode.INVALID_INPUT, };
+   return new Promise((res) => {
+      //kick off process of listing files
+      var child = spawn(command[0], (command as string[]).slice(1), options);
+
+      // =>listen on stdout
+      child.stdout.on('data', async (data: any) => {
+         let result = await callback('stdout', data, child);
+         if (result) {
+            res(result);
+         }
+      });
+      // =>listen on stderr
+      child.stderr.on('data', async (data: any) => {
+         let result = await callback('stderr', data, child);
+         if (result) {
+            res(result);
+         }
+      });
+      child.on('error', async (err) => {
+         let result = await callback('error', err, child);
+         if (result) {
+            res(result);
+         }
+      });
+      child.on('close', async (code) => {
+         let result = await callback('close', code, child);
+         if (result) {
+            res(result);
+         }
+      });
+      // child.stdout.pipe(process.stdout);
+      // child.stderr.pipe(process.stderr);
+      // process.stdin.pipe(child.stdin);
+   });
 }

@@ -27,9 +27,18 @@
 - [x] create env lib
 - [x] add password input to input lib
 - [x] create 'shell' function to os lib
+- [x] add 'playFromGit' to play lib
+- [x] set debug mode on play script
+- [x] use source map for debugging in play script
+- [x] create 'npm' command
+- [x] add 'rmdir' function to os lib
+- [x] show statistics at end of play script
+- [x] add more functions to systemctl lib
+- [x] create settings lib
+- [x] can add play path on play command 
+- [x] create ssh lib
+- [x] can scp file, directory with ssh lib
 
-- [ ] add 'playFromGit' to play lib
-- [ ] show statistics at end of play script
-- [ ] add more functions to systemctl lib
+
 - [ ] create npm lib
-- [ ] create ssh lib
+- [ ] create argvs lib

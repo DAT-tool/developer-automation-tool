@@ -1,13 +1,24 @@
 import { platform } from 'os';
 import { CommandInput } from '../common/command-input';
 import { messageLog } from '../common/public';
+import { DebugMode } from './os';
 
 export function info(text: string, end = '\n') {
    messageLog(text, 'info', end);
 }
 /**************************************** */
-export function error(text: string, end = '\n') {
-   messageLog(text, 'error', end);
+export function error(text: string | object, end = '\n') {
+   messageLog(String(text), 'error', end);
+   // =>if debug mode enabled
+   if (DebugMode && typeof text === 'object') {
+      console.error(text);
+   }
+}
+/**************************************** */
+export function debug(text: string, type: 'info' | 'error' | 'warning' = 'error', end = '\n') {
+   // =>check for debug mode, enabled
+   if (!DebugMode) return;
+   messageLog(text, type, end);
 }
 /**************************************** */
 export function success(text: string, end = '\n') {

@@ -4,7 +4,7 @@ import url from 'url';
 import * as os from 'os';
 import * as path from 'path';
 import { generateString } from "../common/public";
-import { exec } from "./os";
+import { cwd, exec } from "./os";
 import { error } from "./log";
 
 export async function push(options: {
@@ -37,20 +37,33 @@ export async function clone(options: {
    username?: string;
    password?: string;
    branch?: string;
+   depth?: number;
+   /**
+    * The name of a new directory to clone into.
+    */
+   directory?: string;
 }) {
    // =>check git installed
    if (!await checkGitInstalled()) return;
    // =>parse url
    let q = new url.URL(options.cloneUrl);
-   // =>set username, password
-   let userPass = '';
-   if (options.username) userPass = options.username;
-   if (options.password) userPass += ':' + options.password;
-   // =>set branch
-   let branch = options.branch;
-   if (!branch) branch = '';
    // =>generate command
-   let command = `git clone ${q.protocol}//${userPass.length > 0 ? userPass + '@' : ''}${q.host}${q.pathname} ${branch}`;
+   let command = `git clone `;
+   // =>set depth
+   if (options.depth) command += '--depth=' + options.depth + ' ';
+   // =>set username, password
+   if (options.username) {
+      let userPass = '';
+      userPass = options.username;
+      if (options.password) userPass += ':' + options.password;
+      command += `${q.protocol}//${userPass}@${q.host}${q.pathname} `;
+   } else {
+      command += options.cloneUrl + ' ';
+   }
+   // =>set branch
+   if (options.branch) command += options.branch + ' ';
+   // =>set directory
+   if (options.directory) command += options.directory;
    // console.log('command:', command);
    // =>try to clone
    let output = await exec(command);

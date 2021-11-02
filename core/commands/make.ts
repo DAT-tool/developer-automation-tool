@@ -71,7 +71,7 @@ export async function main(): Promise<number> {
                version: "1.0.0",
                main: ".dat/play.js",
                dependencies: {
-                  "dat": `^${VERSION}`,
+                  // "dat": `^${VERSION}`,
                },
                devDependencies: {
                   "@types/node": "^16.11.6",
@@ -90,6 +90,10 @@ export async function main(): Promise<number> {
 - type \`npm install\` to install node types
 - then, type \`dat m \`, if you want to develop script
 - And for use ${playName} script, type \`dat play\` or just \`dat p\`
+
+## Debug Play Script
+
+For debugging play script, you must install \`source-map-support\` package by type \`dat npm -n source-map-support\`
 
 ## Install Node.js 12
 
@@ -122,12 +126,18 @@ ${playName} was built by DAT ${VERSION}
          name: '@dat',
          version: VERSION,
          "dependencies": {},
+         files: [
+            "lib",
+            "common",
+         ],
       }, null, 2));
       // =>create dat dir
       let dirs = ['lib', 'common'];
       for (const dir of dirs) {
          // =>create types dir
          FS.mkdirSync(PATH.join(datPath, dir), { recursive: true });
+         // =>create package.json file
+         FS.writeFileSync(PATH.join(Global.dirPath, dir, 'package.json'), JSON.stringify({ name: dir, dependencies: {} }, null, 2));
          // =>get list of all type files
          let types = await getFilesList(PATH.join(Global.dirPath, dir));
          for (const f of types) {

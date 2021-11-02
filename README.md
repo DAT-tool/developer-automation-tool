@@ -22,6 +22,7 @@ you can add multiple scripts and load them to main play script. and you LOVE it 
 - [x] git: run git commands
 - [x] systemctl: run and Control the systemd system and service manager
 - [x] env: save and load env variables used in play script
+- [x] settings: set global variables
 
 ## get-started
 
