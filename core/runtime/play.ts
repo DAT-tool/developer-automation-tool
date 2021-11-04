@@ -7,7 +7,7 @@ import * as NET from 'net';
 import * as SSH from 'ssh2';
 import { checkPortInUse, convertMSToHumanly, errorLog, messageLog, randomInt } from "../common/public";
 import { Global } from '../global';
-import { ReturnStatusCode } from '../common/types';
+import { ExitCode } from '../common/types';
 import { SSHConnection } from './ssh';
 
 export class PlayScript {
@@ -61,6 +61,8 @@ export class PlayScript {
    /**************************************** */
    async play(argvs: string[]) {
       await this.beforeRun();
+      // =>set argvs, if not
+      if (!argvs) argvs = [];
       try {
          // =>if not ignore compile
          if (!this.buildMeta.ignore_compile) {
@@ -70,6 +72,7 @@ export class PlayScript {
             this.buildMeta.complied_at = new Date().getTime();
             this.buildMeta.compile_ms = new Date().getTime() - this.buildMeta.compile_started_at;
          }
+
          // =>inject 'initialize' function to script
          FS.writeFileSync(this.tmpPlayPath, FS.readFileSync(this.playPath) + `
 async function initialize() {
@@ -77,6 +80,7 @@ async function initialize() {
    // var dat_log = require('@dat/lib/log');
    dat_os.SocketPort = ${this.socketPort};
    dat_os.DebugMode = ${Global.isDebug ? 'true' : 'false'};
+   dat_os.ScriptArgvs = ${JSON.stringify(argvs)};
    try{
       require('source-map-support').install({
           environment: 'node',
@@ -101,8 +105,7 @@ exports.initialize = initialize;
          FS.writeFileSync(this.buildMetaPath, JSON.stringify(this.buildMeta, null, 2));
          // =>run init function
          playFile['initialize']();
-         // =>set argvs, if not
-         if (!argvs) argvs = [];
+
          // =>run main function
          let res = await playFile['main'](argvs);
          if (res === undefined) res = 0;
@@ -122,6 +125,7 @@ exports.initialize = initialize;
    }
    /**************************************** */
    showPlayStatistics() {
+      // console.log('stat', this.settings.show_statistics)
       if (!this.settings.show_statistics) return;
       let data = {
          'Play Script': PATH.basename(PATH.dirname(this.path)),
@@ -220,6 +224,7 @@ exports.initialize = initialize;
    initEventSocket() {
       // =>run socket server
       this.eventSocket = NET.createServer().listen(this.socketPort);
+      // console.log('connect server', this.socketPort)
       // => listen on socket client connected
       this.eventSocket.on('connection', (socket) => {
          this.socketClients.push(socket);
@@ -256,13 +261,14 @@ exports.initialize = initialize;
       });
       // =>when error on socket
       this.eventSocket.on('error', (e) => {
-         messageLog(e.message, 'error');
+         errorLog('err898', e);
          this.eventSocket.close();
          this.eventSocket = undefined;
       });
    }
    /**************************************** */
    closeEventSocket() {
+      // console.log('close socket')
       // destroy all clients (this will emit the 'close' event above)
       for (var i in this.socketClients) {
          this.socketClients[i].destroy();
@@ -302,10 +308,10 @@ exports.initialize = initialize;
       // =>if show statistics
       if (name === 'show_statistics') {
          this.settings.show_statistics = true;
-         return ReturnStatusCode.SUCCESS;
+         return ExitCode.SUCCESS;
       }
       //TODO:
-      return ReturnStatusCode.NOT_FOUND_KEY;
+      return ExitCode.NOT_FOUND_KEY;
    }
    /**************************************** */
    async runSSHEvent(name: 'scp', options: {
@@ -317,12 +323,12 @@ exports.initialize = initialize;
 
       let stdout = '';
       let stderr = '';
-      let code = ReturnStatusCode.SUCCESS;
+      let code = ExitCode.SUCCESS;
       // =>try to ssh connect
       const conn = await SSHConnection.connectSSH(options.config);
       // =>if failed
       if (typeof conn === 'string') {
-         return { code: ReturnStatusCode.FAILED_SSH, stderr: conn };
+         return { code: ExitCode.FAILED_SSH, stderr: conn };
       }
       // =>create new ssh connection instance
       let connection = new SSHConnection(options.config, conn);
@@ -331,7 +337,7 @@ exports.initialize = initialize;
       if (name === 'scp') {
          let sftp = await connection.sftpSession();
          if (sftp[0]) {
-            return { code: ReturnStatusCode.FAILED_SFTP, stderr: String(sftp[0]) };
+            return { code: ExitCode.FAILED_SFTP, stderr: String(sftp[0]) };
          }
          // =>scp file or dir
          let result = await connection.scp(sftp[1], options.mode, options.remotePath, options.localPath);
@@ -341,7 +347,7 @@ exports.initialize = initialize;
       }
       //TODO:
       else {
-         code = ReturnStatusCode.NOT_FOUND_KEY;
+         code = ExitCode.NOT_FOUND_KEY;
       }
       // =>disconnect ssh
       await connection.close();

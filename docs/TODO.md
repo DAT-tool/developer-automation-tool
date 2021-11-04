@@ -38,7 +38,10 @@
 - [x] can add play path on play command 
 - [x] create ssh lib
 - [x] can scp file, directory with ssh lib
-
+- [x] fix 'load' function in env lib
+- [x] add 'has' function to env lib
+- [x] add 'pull' function to git lib
+- [X] add 'remote' function to git lib
+- [x] create argvs lib
 
 - [ ] create npm lib
-- [ ] create argvs lib

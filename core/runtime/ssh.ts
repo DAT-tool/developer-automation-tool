@@ -1,5 +1,5 @@
 import { ExecResponse } from './../common/interfaces';
-import { ReturnStatusCode } from './../common/types';
+import { ExitCode } from './../common/types';
 
 import * as SSH from 'ssh2';
 import * as FS from 'fs';
@@ -280,7 +280,7 @@ export class SSHConnection {
       return new Promise(async (res) => {
          sftp.mkdir(remotePath, (err) => {
             let code = 0;
-            if (err) code = ReturnStatusCode.FAILED_MKDIR;
+            if (err) code = ExitCode.FAILED_MKDIR;
             res({ code, stderr: err });
          });
       });
@@ -290,7 +290,7 @@ export class SSHConnection {
       return new Promise(async (res) => {
          sftp.stat(remotePath, (err, stats) => {
             let code = 0;
-            if (err) code = ReturnStatusCode.FAILED_STAT;
+            if (err) code = ExitCode.FAILED_STAT;
             res({ code, stderr: err, stdout: JSON.stringify(stats) });
          });
       });
@@ -302,7 +302,7 @@ export class SSHConnection {
          if (mode === 'putFile') {
             sftp.fastPut(localPath, remotePath, (err) => {
                let code = 0;
-               if (err) code = ReturnStatusCode.FAILED_COPY;
+               if (err) code = ExitCode.FAILED_COPY;
                res({ code, stderr: err });
             });
          }
@@ -328,7 +328,7 @@ export class SSHConnection {
                      if (res3.code !== 0) return res3;
                   }
                }
-               return { code: ReturnStatusCode.SUCCESS };
+               return { code: ExitCode.SUCCESS };
             };
             // =>check remote path folder, exist
             let stat = await this.stat(sftp, remotePath);
@@ -343,7 +343,7 @@ export class SSHConnection {
          if (mode === 'getFile') {
             sftp.fastGet(remotePath, localPath, (err) => {
                let code = 0;
-               if (err) code = ReturnStatusCode.FAILED_COPY;
+               if (err) code = ExitCode.FAILED_COPY;
                res({ code, stderr: err });
             });
          }

@@ -1,7 +1,7 @@
 import { platform } from 'os';
 import { ExecResponse, SSHConfig } from "../common/interfaces";
 import { runSudoCommand, spawnExec } from "../common/public";
-import { ReturnStatusCode } from "../common/types";
+import { ExitCode } from "../common/types";
 import { debug, error, info, warning } from "./log";
 import * as path from 'path';
 import * as fs from 'fs';

@@ -1,11 +1,12 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { ReturnStatusCode } from '../common/types';
+import { ExitCode } from '../common/types';
 import { checkGitInstalled, clone } from './git';
 import { error } from './log';
 import { connectDatSocket, cwd, rmdir } from './os';
 
 export interface GitPlayItem {
+   name?: string; // needs for remove play item
    baseUrl: string;
    accessRepositories?: string[];
    username?: string;
@@ -41,6 +42,22 @@ export function addGitPlay(item: GitPlayItem) {
 }
 /***************************************** */
 /**
+ * remove a git play base url by name
+ * @param base_url 
+ */
+export function removeGitPlay(name: string) {
+   // =>search by name
+   let index = GitPlayItems.findIndex(i => i.name === name);
+   if (index > -1) {
+      GitPlayItems.splice(index, 1);
+      return true;
+   }
+   else {
+      return false;
+   }
+}
+/***************************************** */
+/**
  * first clone play script from git and then play it
  * @param name 
  * @param argvs 
@@ -58,7 +75,7 @@ export async function playFromGit<T extends string = string>(name: T, argvs: str
    force?: boolean;
 } = {}): Promise<number> {
    // =>check git installed
-   if (!await checkGitInstalled()) return ReturnStatusCode.COMMAND_NOT_INSTALLED;
+   if (!await checkGitInstalled()) return ExitCode.COMMAND_NOT_INSTALLED;
    // =>init vars
    let gitPlayDirPath = path.join(await cwd(), '.dat', 'plays');
    let gitPlayScriptPath = path.join(gitPlayDirPath, name);
@@ -96,7 +113,7 @@ export async function playFromGit<T extends string = string>(name: T, argvs: str
       }
       // =>not found git repo by name
       if (!clonedScript) {
-         return ReturnStatusCode.NOT_FOUND_GIT_REPOSITORY;
+         return ExitCode.NOT_FOUND_GIT_REPOSITORY;
       }
    }
    // =>play script

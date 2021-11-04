@@ -5,12 +5,13 @@ import * as net from 'net';
 import * as path from 'path';
 import { error, debug, successStatus } from './log';
 import { EventData, EventResponse, ExecResponse } from '../common/interfaces';
-import { ReturnStatusCode } from '../common/types';
+import { ExitCode } from '../common/types';
 import { outputStreamExec, execCommandSplitter, spawnExec } from '../common/public';
 
 export let SocketPort: number;
 export let DebugMode = false;
 export let currentWorkingPath: string;
+export let ScriptArgvs: string[] = [];
 /***************************************** */
 export type LinuxDistributionName = 'debian' | 'ubuntu' | 'opensuse-leap' | 'opensuse' | 'ManjaroLinux' | 'centos' | 'fedora' | 'redhat';
 
@@ -118,7 +119,7 @@ export async function exec(command: string | string[]): Promise<ExecResponse> {
       }
       // =>if close
       else if (type === 'close' || type === 'error') {
-         let code = ReturnStatusCode.EXEC_ERROR;
+         let code = ExitCode.EXEC_ERROR;
          if (type === 'close') code = Number(String(data));
          return { code, stdout: stdout.trim(), stderr: stderr.trim() };
       }
@@ -172,7 +173,7 @@ export async function connectDatSocket(event: EventData): Promise<EventResponse>
    // =>check socket port exist
    if (!SocketPort) {
       debug('socket port not defined, so can not create socket to connect to DAT!');
-      return { status: ReturnStatusCode.DAT_SOCKET_BAD_PORT }
+      return { status: ExitCode.DAT_SOCKET_BAD_PORT }
    }
    return new Promise((res) => {
       let client = net.connect(
@@ -186,15 +187,15 @@ export async function connectDatSocket(event: EventData): Promise<EventResponse>
          // console.log('[debug] client', data.toString());
          client.end();
          client.destroy();
-         res({ status: ReturnStatusCode.SUCCESS, data });
+         res({ status: ExitCode.SUCCESS, data });
       })
       client.on('connect', () => {
          client.write(JSON.stringify(event));
       });
-      client.once('close', () => res({ status: ReturnStatusCode.DAT_SOCKET_CLOSE }));
+      client.once('close', () => res({ status: ExitCode.DAT_SOCKET_CLOSE }));
       client.once('error', (e) => {
          debug(e.message);
-         res({ status: ReturnStatusCode.DAT_SOCKET_ERROR });
+         res({ status: ExitCode.DAT_SOCKET_ERROR });
       });
    });
 }

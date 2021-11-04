@@ -15,11 +15,18 @@ export async function save(key: string, value: any) {
    return true;
 }
 /************************************* */
-export async function load(key: string, def: undefined) {
+export async function load<T = string>(key: string, def?: T): Promise<T> {
    // =>load all .env file
    let env = await loadAll();
    if (env[key] === undefined) return def;
-   return env[key];
+   return env[key] as T;
+}
+/************************************* */
+export async function has(key: string): Promise<boolean> {
+   // =>load all .env file
+   let env = await loadAll();
+   if (env[key] === undefined || env[key] === null) return false;
+   return true;
 }
 /************************************* */
 /**

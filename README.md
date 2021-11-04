@@ -1,4 +1,4 @@
-# DAT - Developer Automation Tool (*V 0.2*)
+# DAT - Developer Automation Tool (*V 0.4 - BETA*)
 
 DAT is a simple IT automation system for developers. It handles configuration management and application deployment.
 DAT can be run dependencies of your script.
@@ -23,10 +23,13 @@ you can add multiple scripts and load them to main play script. and you LOVE it 
 - [x] systemctl: run and Control the systemd system and service manager
 - [x] env: save and load env variables used in play script
 - [x] settings: set global variables
+- [x] ssh: using ssh2 nad can run ssh commands
+- [x] argvs: parse script argvs
 
 ## get-started
 
-just install with npm: `npm i dat-tool -g`
+- install node.js 12 or higher
+- install with npm: `npm i dat-tool -g`
 
 ## hello world! sample
 
@@ -38,6 +41,7 @@ just install with npm: `npm i dat-tool -g`
 
 - you need one file:
   - play.ts: a play script that run your commands on typescript
+- and you have many libraries and other scripts than can play them!
 
 ## Authors
 

@@ -3,9 +3,9 @@ import * as PROCESS from 'process';
 import * as PATH from 'path';
 import * as FS from 'fs';
 import * as NET from 'net';
-import { ExecResponse, FileInfo } from "./interfaces";
+import { CommandArgvModel, CommandRunArgv, ExecResponse, FileInfo } from "./interfaces";
 import { ChildProcessWithoutNullStreams, spawn, SpawnOptions, SpawnOptionsWithoutStdio } from "child_process";
-import { ReturnStatusCode } from "./types";
+import { ExitCode } from "./types";
 /************************************************************* */
 export function log(text: string, label?: string, type: 'info' | 'error' | 'warning' | 'success' | 'normal' = 'normal', hasDateTime = true, end = '\n') {
    let time = new Date().toTimeString().slice(0, 8);
@@ -337,7 +337,7 @@ export async function spawnExec(
       command = execCommandSplitter(command);
    }
    // =>if not valid command
-   if (!Array.isArray(command) || command.length < 1) return { code: ReturnStatusCode.INVALID_INPUT, };
+   if (!Array.isArray(command) || command.length < 1) return { code: ExitCode.INVALID_INPUT, };
    return new Promise((res) => {
       //kick off process of listing files
       var child = spawn(command[0], (command as string[]).slice(1), options);
@@ -372,4 +372,104 @@ export async function spawnExec(
       // child.stderr.pipe(process.stderr);
       // process.stdin.pipe(child.stdin);
    });
+}
+/************************************************************* */
+export function parseProgramArgvs(programArgvs: string[]) {
+   let argvs: CommandRunArgv[] = [];
+   for (let i = 0; i < programArgvs.length; i++) {
+      // =>init vars
+      const argv = programArgvs[i];
+      let key = '';
+      let value;
+      let isAlias = false;
+      // =>find argv name or alias
+      if (argv.startsWith('--')) {
+         key = argv.substr(2).split('=')[0];
+         if (argv.split('=').length > 1) {
+            value = argv.split('=')[1];
+         }
+      } else if (argv.startsWith('-')) {
+         key = argv.substr(1);
+         isAlias = true;
+         // =>find argv in next 
+         if (i + 1 < programArgvs.length && !programArgvs[i + 1].startsWith('-')) {
+            value = programArgvs[i + 1];
+            i++;
+         }
+      } else {
+         key = argv;
+      }
+      // =>add parsed argv
+      argvs.push({
+         key,
+         value,
+         isAlias,
+      });
+   }
+   return argvs;
+}
+/************************************************************* */
+export async function mapRunProgramArguments<A extends string = string>(
+   argvs: CommandRunArgv[],
+   definedArgvs: CommandArgvModel<A>[],
+   notFoundArgv?: (argv: CommandRunArgv) => Promise<boolean | void>
+): Promise<CommandRunArgv<A>[]> {
+   let runArgvs: CommandRunArgv<A>[] = [];
+   // =>iterate program argvs
+   for (const argv of argvs) {
+      // =>find argv from command argvs
+      const commandArgv = definedArgvs.find(i => (argv.isAlias && i.alias === argv.key) || (i.name === argv.key));
+      // =>if not found argv
+      if (!commandArgv) {
+         // =>if not found function exist
+         if (notFoundArgv) {
+            let res = await notFoundArgv(argv);
+         } else {
+            warningLog('warn346', 'command argv name or alias not found: ' + argv.key);
+         }
+         continue;
+      }
+      // =>get argv value, if must
+      if (commandArgv.type) {
+         switch (commandArgv.type) {
+            case 'number':
+               argv.value = Number(argv.value);
+               if (isNaN(argv.value)) argv.value = undefined;
+               break;
+            case 'boolean':
+               if (argv.value === 'true') {
+                  argv.value = true;
+               } else if (argv.value) {
+                  argv.value = false;
+               }
+               break;
+            default:
+               break;
+         }
+         if (!argv.value) {
+            argv.value = commandArgv.defaultValue;
+         }
+      }
+      // =>if boolean type argv and has no value
+      if (commandArgv.type === 'boolean' && typeof argv.value !== 'boolean') {
+         argv.value = true;
+      }
+      // console.log('v:', commandArgv.name, argv.value)
+      // =>map argv
+      runArgvs.push({
+         key: commandArgv.name,
+         value: argv.value,
+      });
+   }
+   // =>set default value for non argvs
+   for (const argv of definedArgvs) {
+      if (!runArgvs.find(i => i.key === argv.name) && argv.defaultValue !== undefined) {
+         runArgvs.push({
+            key: argv.name,
+            value: argv.defaultValue,
+         });
+      }
+   }
+
+   return runArgvs;
 }

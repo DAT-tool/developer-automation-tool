@@ -1,5 +1,5 @@
 import { CommandArgvModel, CommandModel, CommandRunArgv } from "./interfaces";
-import { errorLog, infoLog, log, messageLog, warningLog } from './public';
+import { errorLog, infoLog, log, mapRunProgramArguments, messageLog, warningLog } from './public';
 import * as PATH from 'path';
 import { Global } from "../global";
 import { baseArgvName, CommandType } from "./types";
@@ -22,11 +22,11 @@ export abstract class CommandClass<A extends string = string> {
       // =>set argvs, if not
       if (!def.argvs) def.argvs = [];
       // =>add common argvs
-      def.argvs.push({
-         alias: 'h',
-         name: 'help',
-         description: 'Shows a help message for this command in the console.',
-      });
+      // def.argvs.push({
+      //    alias: 'h',
+      //    name: 'help',
+      //    description: 'Shows a help message for this command in the console.',
+      // });
       def.argvs.push({
          name: 'debug',
          alias: 'ddd',
@@ -39,59 +39,15 @@ export abstract class CommandClass<A extends string = string> {
    /**************************************** */
    abstract define(): CommandModel<A>;
    /**************************************** */
-   mapRunArguments(argvs: CommandRunArgv[]) {
-      for (const argv of argvs) {
-         // =>find argv from command argvs
-         const commandArgv = this.argvs.find(i => (argv.isAlias && i.alias === argv.key) || (i.name === argv.key));
-         // =>if not found argv
-         if (!commandArgv) {
-            // =>if not play command
-            if (this.name !== 'play') {
-               warningLog('warn343', 'command argv name or alias not found: ' + argv.key);
-            }
-            continue;
+   async mapRunArguments(argvs: CommandRunArgv[]) {
+      this.runArgvs = await mapRunProgramArguments<A>(argvs, this.argvs, async (argv) => {
+         // =>if 'play' or 'help' command
+         if (this.name === 'play' || this.name === 'help') {
+            return true;
          }
-         // =>get argv value, if must
-         if (commandArgv.type) {
-            switch (commandArgv.type) {
-               case 'number':
-                  argv.value = Number(argv.value);
-                  if (isNaN(argv.value)) argv.value = undefined;
-                  break;
-               case 'boolean':
-                  if (argv.value === 'true') {
-                     argv.value = true;
-                  } else if (argv.value) {
-                     argv.value = false;
-                  }
-                  break;
-               default:
-                  break;
-            }
-            if (!argv.value) {
-               argv.value = commandArgv.defaultValue;
-            }
-         }
-         // =>if boolean type argv and has no value
-         if (commandArgv.type === 'boolean' && typeof argv.value !== 'boolean') {
-            argv.value = true;
-         }
-         // console.log('v:', commandArgv.name, argv.value)
-         // =>map argv
-         this.runArgvs.push({
-            key: commandArgv.name,
-            value: argv.value,
-         });
-      }
-      // =>set default value for non argvs
-      for (const argv of this.argvs) {
-         if (!this.hasArgv(argv.name) && argv.defaultValue !== undefined) {
-            this.runArgvs.push({
-               key: argv.name,
-               value: argv.defaultValue,
-            });
-         }
-      }
+         warningLog('warn345', 'command argv name or alias not found: ' + argv.key);
+         return true;
+      });
    }
    /**************************************** */
    async preRun(): Promise<boolean> {
@@ -99,11 +55,6 @@ export abstract class CommandClass<A extends string = string> {
          // =>if debug argv
          if (this.hasArgv('debug')) {
             Global.isDebug = true;
-         }
-         // =>if help argv
-         if (this.hasArgv('help')) {
-            this.helpArgv();
-            return true;
          }
          // =>run command
          return await this.run();

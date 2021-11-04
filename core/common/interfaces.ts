@@ -76,6 +76,7 @@ export interface ExecResponse {
    stdout?: string;
    stderr?: string;
    code: number;
+   result?: any;
 }
 
 export interface SSHConfig {

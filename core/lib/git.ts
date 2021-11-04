@@ -6,6 +6,8 @@ import * as path from 'path';
 import { generateString } from "../common/public";
 import { cwd, exec } from "./os";
 import { error } from "./log";
+import { ExecResponse } from "../common/interfaces";
+import { ExitCode } from "../common/types";
 
 export async function push(options: {
    pushUrl: string;
@@ -68,6 +70,98 @@ export async function clone(options: {
    // =>try to clone
    let output = await exec(command);
 
+   return output;
+}
+/****************************************** */
+/**
+ * git-pull - Fetch from and integrate with another repository or a local
+ * @param options 
+ */
+export async function pull(options: {
+   /**
+    * Fetch all remotes.
+    */
+   all?: boolean;
+   force?: boolean;
+   branch?: string;
+   remote?: string;
+   verbose?: boolean;
+
+}) {
+   // =>check git installed
+   if (!await checkGitInstalled()) return;
+   // =>generate command
+   let command = `git pull `;
+   // =>set 'force' option
+   if (options.force) command += '--force ';
+   // =>set 'all' option
+   if (options.all) command += '--all ';
+   // =>set 'verbose' option
+   if (options.verbose) command += '--verbose ';
+   // =>set remote name
+   if (options.remote) command += options.remote + ' ';
+   // =>set branch name
+   if (options.branch) command += options.branch + ' ';
+
+   // console.log('command:', command);
+   // =>try to push
+   let output = await exec(command);
+
+   return output;
+}
+/****************************************** */
+/**
+ * git-remote - Manage set of tracked repositories
+ * @param mode 
+ * @param options 
+ * @returns 
+ */
+export async function remote(mode: 'add' | 'rm' | 'rename' | 'get-url' | 'set-url' | 'show', options: {
+   name?: string;
+   url?: string;
+   newName?: string;
+}): Promise<ExecResponse> {
+   // =>check git installed
+   if (!await checkGitInstalled()) return;
+   // =>generate command
+   let command = `git remote `;
+   // =>if 'add' mode
+   if (mode === 'add') {
+      if (!options.name || !options.url) return { code: ExitCode.INVALID_OPTION };
+      command += `add -f ${options.name} ${options.url}`;
+   }
+   // =>if 'rm' mode
+   if (mode === 'rm') {
+      if (!options.name) return { code: ExitCode.INVALID_OPTION };
+      command += `rm ${options.name}`;
+   }
+   // =>if 'rename' mode
+   if (mode === 'rename') {
+      if (!options.name || !options.newName) return { code: ExitCode.INVALID_OPTION };
+      command += `rename ${options.name} ${options.newName}`;
+   }
+   // =>if 'get-url' mode
+   if (mode === 'get-url') {
+      if (!options.name) return { code: ExitCode.INVALID_OPTION };
+      command += `get-url ${options.name}`;
+   }
+   // =>if 'set-url' mode
+   if (mode === 'set-url') {
+      if (!options.name || !options.url) return { code: ExitCode.INVALID_OPTION };
+      command += `set-url ${options.name} ${options.url}`;
+   }
+   // =>if 'show' mode
+   if (mode === 'show') {
+      command += `show`;
+   }
+
+   // console.log('command:', command);
+   // =>try to run command
+   let output = await exec(command);
+   // =>if 'show' mode
+   if (mode === 'show' && output.stdout && output.stdout.length > 0) {
+      output.result = output.stdout.split('\n');
+   }
    return output;
 }
 /****************************************** */
