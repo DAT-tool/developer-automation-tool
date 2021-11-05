@@ -1,4 +1,4 @@
-import { EventData, PlayScriptSettings, SSHConfig, ExecResponse } from './../common/interfaces';
+import { EventData, PlayScriptSettings, SSHConfig, ExecResponse, TemplateOptions } from './../common/interfaces';
 import { BuildMetaData } from "../common/interfaces";
 import * as FS from 'fs';
 import * as PATH from 'path';
@@ -9,6 +9,7 @@ import { checkPortInUse, convertMSToHumanly, errorLog, messageLog, randomInt } f
 import { Global } from '../global';
 import { ExitCode } from '../common/types';
 import { SSHConnection } from './ssh';
+import { TemplateParser } from './template';
 
 export class PlayScript {
    path: string;
@@ -245,12 +246,17 @@ exports.initialize = initialize;
                   socket.write(this.pwd);
                }
                // =>if 'settings' event
-               if (eventData.event === 'settings') {
+               else if (eventData.event === 'settings') {
                   let response = await this.runSettingsEvent(eventData.name as any, eventData.argvs);
                   socket.write(String(response));
                }
+               // =>if 'template' event
+               else if (eventData.event === 'template') {
+                  let response = await this.runTemplateEvent(eventData.name as any, eventData.options);
+                  socket.write(String(response));
+               }
                // =>if 'ssh' event
-               if (eventData.event === 'ssh') {
+               else if (eventData.event === 'ssh') {
                   let response = await this.runSSHEvent(eventData.name as any, eventData.options as any);
                   socket.write(JSON.stringify(response));
                }
@@ -309,6 +315,22 @@ exports.initialize = initialize;
       if (name === 'show_statistics') {
          this.settings.show_statistics = true;
          return ExitCode.SUCCESS;
+      }
+      //TODO:
+      return ExitCode.NOT_FOUND_KEY;
+   }
+   /**************************************** */
+   async runTemplateEvent(name: 'render_string' | 'render_file', options: TemplateOptions) {
+      // =>init template parser
+      let templateParser = new TemplateParser(options);
+      // =>if render string
+      if (name === 'render_string') {
+         return await templateParser.renderString(options['src']);
+      }
+      // =>if render file
+      else if (name === 'render_file') {
+         await templateParser.initEnv();
+         return await templateParser.render(options['filename']);
       }
       //TODO:
       return ExitCode.NOT_FOUND_KEY;

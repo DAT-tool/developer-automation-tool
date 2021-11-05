@@ -103,7 +103,7 @@ export function commandSplitter(command: string) {
    return execCommandSplitter(command);
 }
 /***************************************** */
-export async function exec(command: string | string[]): Promise<ExecResponse> {
+export async function exec(command: string | string[], cwd?: string): Promise<ExecResponse> {
    let stdout = '';
    let stderr = '';
    return await spawnExec(command, async (type, data, child) => {
@@ -124,7 +124,7 @@ export async function exec(command: string | string[]): Promise<ExecResponse> {
          return { code, stdout: stdout.trim(), stderr: stderr.trim() };
       }
       return undefined;
-   });
+   }, { cwd });
 }
 /***************************************** */
 /**

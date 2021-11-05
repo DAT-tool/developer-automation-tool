@@ -43,5 +43,9 @@
 - [x] add 'pull' function to git lib
 - [X] add 'remote' function to git lib
 - [x] create argvs lib
+- [x] upgrade 'pull', 'push' functions of git lib
+- [x] create template lib
+- [x] use nunjucks template engine
+
 
 - [ ] create npm lib

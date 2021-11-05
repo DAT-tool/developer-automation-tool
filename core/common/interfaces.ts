@@ -58,10 +58,10 @@ export interface BuildMetaData {
 }
 
 export interface EventData {
-   event: 'play' | 'cwd' | 'settings' | 'ssh';
-   name?: string; // used for 'play', 'settings' event
+   event: 'play' | 'cwd' | 'settings' | 'ssh' | 'template';
+   name?: string; // used for 'play', 'settings', 'template' event
    argvs?: string[]; // used for 'play' event
-   options?: {}; // used for 'ssh' event
+   options?: {}; // used for 'ssh', 'options' event
 }
 
 export interface EventResponse {
@@ -89,4 +89,12 @@ export interface SSHConfig {
 
 export interface SSHHostConfig extends SSHConfig {
    connection?: SSHConnection;
+}
+
+
+export interface TemplateOptions {
+   noCache?: boolean;
+   templatePath?: string
+   autoescape?: boolean;
+   data?: object;
 }

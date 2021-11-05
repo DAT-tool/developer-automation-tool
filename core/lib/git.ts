@@ -14,22 +14,32 @@ export async function push(options: {
    username: string;
    password?: string;
    branch?: string; // default push all branches
+   remote?: string;
+   cwd?: string;
 }) {
    // =>check git installed
    if (!await checkGitInstalled()) return;
-   // =>parse url
-   let q = new url.URL(options.pushUrl);
-   // =>set username, password
-   let usePass = options.username;
-   if (options.password) usePass += ':' + options.password;
+   // =>if user pass exist and not pull url exist
+   if (options.username && !options.pushUrl && options.remote) {
+      // =>get url of remote
+      let tmp = await convertRemoteToUrl(options.remote, options.username, options.password, options.cwd);
+      if (typeof tmp === 'object') return tmp;
+      // =>set push url
+      options.pushUrl = tmp;
+      // =>reset remote
+      options.remote = undefined;
+   }
+   let command = 'git push ';
+   // =>set remote
+   if (options.remote) command += options.remote + ' ';
+   // =>set push url
+   if (options.pushUrl) command += options.pushUrl + ' ';
    // =>set branch
    let branch = options.branch;
    if (!branch) branch = '--all';
-   // =>generate command
-   let command = `git push ${q.protocol}//${usePass}@${q.host}${q.pathname} ${branch}`;
-   // console.log('command:', command);
+   command += branch + ' ';
    // =>try to push
-   let output = await exec(command);
+   let output = await exec(command, options.cwd);
 
    return output;
 }
@@ -40,6 +50,7 @@ export async function clone(options: {
    password?: string;
    branch?: string;
    depth?: number;
+   cwd?: string;
    /**
     * The name of a new directory to clone into.
     */
@@ -53,22 +64,15 @@ export async function clone(options: {
    let command = `git clone `;
    // =>set depth
    if (options.depth) command += '--depth=' + options.depth + ' ';
-   // =>set username, password
-   if (options.username) {
-      let userPass = '';
-      userPass = options.username;
-      if (options.password) userPass += ':' + options.password;
-      command += `${q.protocol}//${userPass}@${q.host}${q.pathname} `;
-   } else {
-      command += options.cloneUrl + ' ';
-   }
+   // =>set url
+   command += await getAuthRemoteUrl(options.cloneUrl, options.username, options.password);
    // =>set branch
    if (options.branch) command += options.branch + ' ';
    // =>set directory
    if (options.directory) command += options.directory;
    // console.log('command:', command);
    // =>try to clone
-   let output = await exec(command);
+   let output = await exec(command, options.cwd);
 
    return output;
 }
@@ -86,10 +90,24 @@ export async function pull(options: {
    branch?: string;
    remote?: string;
    verbose?: boolean;
+   username?: string;
+   password?: string;
+   cwd?: string;
+   pullUrl?: string;
 
 }) {
    // =>check git installed
    if (!await checkGitInstalled()) return;
+   // =>if user pass exist and not pull url exist
+   if (options.username && !options.pullUrl && options.remote) {
+      // =>get url of remote
+      let tmp = await convertRemoteToUrl(options.remote, options.username, options.password, options.cwd);
+      if (typeof tmp === 'object') return tmp;
+      // =>set pull url
+      options.pullUrl = tmp;
+      // =>reset remote
+      options.remote = undefined;
+   }
    // =>generate command
    let command = `git pull `;
    // =>set 'force' option
@@ -100,12 +118,14 @@ export async function pull(options: {
    if (options.verbose) command += '--verbose ';
    // =>set remote name
    if (options.remote) command += options.remote + ' ';
+   // =>set pull url
+   if (options.pullUrl) command += options.pullUrl + ' ';
    // =>set branch name
    if (options.branch) command += options.branch + ' ';
 
    // console.log('command:', command);
    // =>try to push
-   let output = await exec(command);
+   let output = await exec(command, options.cwd);
 
    return output;
 }
@@ -120,6 +140,7 @@ export async function remote(mode: 'add' | 'rm' | 'rename' | 'get-url' | 'set-ur
    name?: string;
    url?: string;
    newName?: string;
+   cwd?: string;
 }): Promise<ExecResponse> {
    // =>check git installed
    if (!await checkGitInstalled()) return;
@@ -157,7 +178,7 @@ export async function remote(mode: 'add' | 'rm' | 'rename' | 'get-url' | 'set-ur
 
    // console.log('command:', command);
    // =>try to run command
-   let output = await exec(command);
+   let output = await exec(command, options.cwd);
    // =>if 'show' mode
    if (mode === 'show' && output.stdout && output.stdout.length > 0) {
       output.result = output.stdout.split('\n');
@@ -172,4 +193,28 @@ export async function checkGitInstalled() {
       return false;
    }
    return true;
+}
+/****************************************** */
+async function convertRemoteToUrl(remoteName: string, username?: string, password?: string, cwd?: string): Promise<ExecResponse | string> {
+   // =>get url of remote
+   let tmp = await remote('get-url', { name: remoteName, cwd });
+   if (tmp.code !== ExitCode.SUCCESS) return tmp;
+   // =>set url
+   let url = await getAuthRemoteUrl(tmp.stdout, username, password);
+
+   return url;
+}
+/****************************************** */
+async function getAuthRemoteUrl(fetchUrl: string, username?: string, password?: string) {
+   // =>parse url
+   let q = new url.URL(fetchUrl);
+   // =>if not username
+   if (!username) {
+      return fetchUrl;
+   }
+   // =>set username, password
+   let usePass = username;
+   if (password) usePass += ':' + password;
+   // =>generate command
+   return `${q.protocol}//${usePass}@${q.host}${q.pathname}`;
 }

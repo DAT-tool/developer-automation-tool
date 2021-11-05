@@ -1,14 +1,15 @@
 {
   "name": "dat-tool",
   "description": "Developer automation tool command cli",
-  "version": "0.4.1",
+  "version": "0.4.4",
   "author": "madkne",
   "keywords": [
     "automation",
     "tool",
     "developer",
     "cli",
-    "devkit"
+    "devkit",
+    "template"
   ],
   "files": [
     "dist",
@@ -31,12 +32,14 @@
     "dev": "concurrently \"tsc -b -w tsconfig.json\" \"nodemon dist/index.js\""
   },
   "dependencies": {
+    "nunjucks": "^3.2.3",
     "ssh2": "^1.5.0",
     "tslib": "^2.2.0",
     "typescript": "^4.0.2"
   },
   "devDependencies": {
     "@types/node": "^14.10.2",
+    "@types/nunjucks": "^3.2.0",
     "@types/ssh2": "^0.5.48",
     "concurrently": "^5.3.0",
     "nodemon": "^2.0.4"
