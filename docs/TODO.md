@@ -43,9 +43,19 @@
 - [x] add 'pull' function to git lib
 - [X] add 'remote' function to git lib
 - [x] create argvs lib
-- [x] upgrade 'pull', 'push' functions of git lib
-- [x] create template lib
+- [x] upgrade 'pull', 'push' functions git
 - [x] use nunjucks template engine
+- [x] create 'randomString' function to os lib
+- [x] encrypt play.ts file by a password
+- [x] create net lib
+- [x] add 'copyDirectory' functions to os lib
+- [x] support copy directory for symbolic links
 
 
 - [ ] create npm lib
+- [ ] add 'progress' function to log lib
+- [ ] can package DAT by nexe or pkg
+- [ ] upgrade 'make' command
+- [ ] create 'install-docker' script
+- [ ] create 'install-docker-compose' script
+- [ ] remove compiled play script after run

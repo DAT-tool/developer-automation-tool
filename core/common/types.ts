@@ -30,5 +30,7 @@ export enum ExitCode {
    FAILED_MKDIR = 43,
    FAILED_STAT = 44,
    INVALID_OPTION = 45,
+   FAILED_IMPORT = 46,
+   FAILED_COMPILE = 47,
 
 }

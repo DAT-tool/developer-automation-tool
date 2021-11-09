@@ -6,7 +6,7 @@ import * as path from 'path';
 import { error, debug, successStatus } from './log';
 import { EventData, EventResponse, ExecResponse } from '../common/interfaces';
 import { ExitCode } from '../common/types';
-import { outputStreamExec, execCommandSplitter, spawnExec } from '../common/public';
+import { outputStreamExec, execCommandSplitter, spawnExec, copyFolderSync, copyDirectoryAsync } from '../common/public';
 
 export let SocketPort: number;
 export let DebugMode = false;
@@ -206,4 +206,31 @@ export async function rmdir(path) {
       return true;
    }
    return false;
+}
+/***************************************** */
+export function randomString(length = 10, includeNumbers = true, includeChars = true) {
+   var result = '';
+   var characters = '';
+   if (includeChars) {
+      characters += 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+   }
+   if (includeNumbers) {
+      characters += '0123456789';
+   }
+   if (!includeChars && !includeNumbers) {
+      characters += '-';
+   }
+   var charactersLength = characters.length;
+   for (var i = 0; i < length; i++) {
+      result += characters.charAt(Math.floor(Math.random() * charactersLength));
+   }
+   return result;
+}
+/***************************************** */
+// export function copyDirectorySync(source: string, target: string, justContents = false) {
+//    return copyFolderSync(source, target, justContents);
+// }
+/***************************************** */
+export async function copyDirectory(path: string, newPath: string, excludeFiles?: string[], excludeDirs?: string[]) {
+   return await copyDirectoryAsync(path, newPath, excludeFiles, excludeDirs);
 }

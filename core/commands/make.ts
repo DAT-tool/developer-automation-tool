@@ -2,7 +2,7 @@ import { CommandClass } from "../common/command";
 import { CommandModel, PlayModel } from "../common/interfaces";
 import * as PATH from 'path';
 import { deleteDirectory, errorLog, getFilesList, infoLog } from "../common/public";
-import { copyDirectory } from '../common/public';
+import { copyDirectoryAsync } from '../common/public';
 import * as FS from 'fs';
 import { Global } from "../global";
 import { VERSION } from "../version";

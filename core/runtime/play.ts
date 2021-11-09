@@ -1,3 +1,4 @@
+import { SourceCodeEncryption } from './encryption';
 import { EventData, PlayScriptSettings, SSHConfig, ExecResponse, TemplateOptions } from './../common/interfaces';
 import { BuildMetaData } from "../common/interfaces";
 import * as FS from 'fs';
@@ -5,11 +6,12 @@ import * as PATH from 'path';
 import * as TS from 'typescript';
 import * as NET from 'net';
 import * as SSH from 'ssh2';
-import { checkPortInUse, convertMSToHumanly, errorLog, messageLog, randomInt } from "../common/public";
+import { checkPortInUse, convertMSToHumanly, errorLog, generateString, messageLog, randomInt } from "../common/public";
 import { Global } from '../global';
 import { ExitCode } from '../common/types';
 import { SSHConnection } from './ssh';
 import { TemplateParser } from './template';
+import { CommandInput } from '../common/command-input';
 
 export class PlayScript {
    path: string;
@@ -18,9 +20,12 @@ export class PlayScript {
    buildMetaPath: string;
    playPath: string;
    buildMeta: BuildMetaData = {};
+   sourceEncrypted = false;
+   filenameWithoutExt: string;
 
    filename = 'play.ts';
    pwd: string;
+   password: string;
 
    eventSocket: NET.Server;
    socketPort: number;
@@ -34,34 +39,60 @@ export class PlayScript {
    }
    /**************************************** */
    async beforeRun() {
-      this.path = PATH.join(this.pwd, this.filename);
-      this.buildPath = PATH.join(this.pwd, '.dat', 'build');
-      this.playPath = PATH.join(this.buildPath, PATH.basename(this.path).split('.')[0] + '.js');
-      this.tmpPlayPath = this.playPath + '.run';
-      this.buildMetaPath = PATH.join(this.buildPath, '.build');
+      try {
+         let filenameSplit = this.filename.split('.');
+         filenameSplit.pop();
+         this.filenameWithoutExt = filenameSplit.join('.');
+         this.path = PATH.join(this.pwd, this.filename);
+         this.buildPath = PATH.join(this.pwd, '.dat', 'build');
+         this.playPath = PATH.join(this.buildPath, this.filenameWithoutExt + '.js');
+         this.tmpPlayPath = this.playPath + '.run';
+         this.buildMetaPath = PATH.join(this.buildPath, '.build');
+         // =>check for .ts file
+         if (PATH.extname(this.path) !== '.ts') {
+            errorLog('err670', `'${this.filename}' file must has .ts extension (${PATH.extname(this.path)} is invalid)`);
+            return false;
+         }
+         this.buildMeta.started_at = new Date().getTime();
+         // =>create build dir
+         FS.mkdirSync(this.buildPath, { recursive: true });
+         // =>check play script encrypted 
+         if (!this.password && await (new SourceCodeEncryption().checkFileEncrypted(this.path))) {
+            this.sourceEncrypted = true;
+            this.password = await CommandInput.askPassword('Enter Password');
+         }
+         // =>get stat of ts file
+         let stat = FS.statSync(this.path);
+         // =>get last modified of ts file
+         this.buildMeta.last_modified = stat.mtimeMs;
+         this.buildMeta.filename = PATH.basename(this.path);
+         // =>check must be ignore compile
+         this.buildMeta.ignore_compile = await this.checkIgnoreCompile();
+         // =>set random open  socket port
+         while (true) {
+            this.socketPort = randomInt(10000, 65500);
+            // =>check port is not listening
+            if (!await checkPortInUse(this.socketPort)) break;
+         }
+         // =>set port on build meta data
+         this.buildMeta.socket_port = this.socketPort;
 
-      this.buildMeta.started_at = new Date().getTime();
-      // =>create build dir
-      FS.mkdirSync(this.buildPath, { recursive: true });
-      // =>get stat of ts file
-      let stat = FS.statSync(this.path);
-      // =>get last modified of ts file
-      this.buildMeta.last_modified = stat.mtimeMs;
-      this.buildMeta.filename = PATH.basename(this.path);
-      // =>check must be ignore compile
-      this.buildMeta.ignore_compile = await this.checkIgnoreCompile();
-      // =>set random open  socket port
-      while (true) {
-         this.socketPort = randomInt(10000, 65500);
-         // =>check port is not listening
-         if (!await checkPortInUse(this.socketPort)) break;
+         return true;
+      } catch (e) {
+         errorLog('err884', e);
+         return false;
       }
-      // =>set port on build meta data
-      this.buildMeta.socket_port = this.socketPort;
    }
    /**************************************** */
-   async play(argvs: string[]) {
-      await this.beforeRun();
+   async play(argvs: string[], password?: string) {
+      if (password) {
+         this.password = password;
+         this.sourceEncrypted = true;
+      }
+      // =>init vars before run
+      if (!await this.beforeRun()) {
+         return ExitCode.INVALID_INPUT;
+      }
       // =>set argvs, if not
       if (!argvs) argvs = [];
       try {
@@ -93,7 +124,7 @@ exports.initialize = initialize;
       `);
       } catch (e) {
          errorLog('err439', e);
-         return 2;
+         return ExitCode.FAILED_COMPILE;
       }
       try {
          // =>import play script js file
@@ -120,7 +151,7 @@ exports.initialize = initialize;
          // =>close event socket
          this.closeEventSocket();
          errorLog('err443', e);
-         return 1;
+         return ExitCode.FAILED_IMPORT;
       }
 
    }
@@ -182,22 +213,54 @@ exports.initialize = initialize;
          if (FS.existsSync(this.playPath)) {
             FS.unlinkSync(this.playPath);
          }
-         const file = { fileName: PATH.basename(this.path), content: FS.readFileSync(this.path).toString() };
+         // =>if play ts file, encrypted
+         let srcEnc = new SourceCodeEncryption();
+         if (await srcEnc.checkFileEncrypted(this.path)) {
+            srcEnc.setPassword(this.password);
+            let tmpPath = await srcEnc.decryptFile(this.path);
+            if (!tmpPath) return false;
+            // =>replace decrypted content with original encrypted file
+            FS.unlinkSync(this.path);
+            FS.writeFileSync(this.path, FS.readFileSync(tmpPath));
+            // console.log(this.path, tmpPath, FS.readFileSync(tmpPath).toString())
+         }
+         const file = { fileName: PATH.basename(this.path), content: FS.readFileSync(this.path).toString(), sourceFile: null, compiled: false };
          // =>create ts compiler instance 
          const compilerHost = TS.createCompilerHost(options);
 
          const originalGetSourceFile = compilerHost.getSourceFile;
          compilerHost.getSourceFile = (fileName) => {
-            // console.log(fileName);
-            if (fileName === file.fileName) {
+            // console.log(fileName, file.fileName);
+            let isMainSource = false;
+            // =>check for compile main source
+            if (!file.compiled && fileName === file.fileName) {
+               isMainSource = true;
+            }
+            //  else if (!file.compiled && this.sourceEncrypted) {
+            //    isMainSource = true;
+            // }
+            // =>if main source
+            if (isMainSource) {
+               file.compiled = true;
                file['sourceFile'] = file['sourceFile'] || TS.createSourceFile(fileName, file.content, TS.ScriptTarget.ES2015, true);
+               // =>encrypt play source file, if need
+               if (this.sourceEncrypted) {
+                  new SourceCodeEncryption(this.password).encryptFile(this.path, PATH.join(this.buildPath, generateString(10))).then(destPath => {
+                     // console.log(destPath)
+                     FS.unlinkSync(this.path);
+                     FS.renameSync(destPath, this.path);
+                  });
+               }
+
                return file['sourceFile'];
             }
-            else return originalGetSourceFile.call(compilerHost, fileName);
+            // =>if other sources
+            return originalGetSourceFile.call(compilerHost, fileName);
          };
          // =>compile ts file
          const program = TS.createProgram([file.fileName], options, compilerHost);
          program.emit();
+         // console.log('source:', file['sourceFile'])
          // messageLog('compiled TS File', 'info');
          return true;
       } catch (e) {
@@ -314,6 +377,13 @@ exports.initialize = initialize;
       // =>if show statistics
       if (name === 'show_statistics') {
          this.settings.show_statistics = true;
+         return ExitCode.SUCCESS;
+      }
+      // =>if encrypt source code
+      else if (name === 'encrypt_source_code') {
+         this.settings.encrypt_source_code = argvs[0];
+         // =>if want to encrypt play file
+         new SourceCodeEncryption(this.settings.encrypt_source_code).encryptFile(this.path, PATH.join(this.pwd, this.filenameWithoutExt + '.enc.ts'));
          return ExitCode.SUCCESS;
       }
       //TODO:

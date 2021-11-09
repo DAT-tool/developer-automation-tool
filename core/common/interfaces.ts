@@ -60,7 +60,7 @@ export interface BuildMetaData {
 export interface EventData {
    event: 'play' | 'cwd' | 'settings' | 'ssh' | 'template';
    name?: string; // used for 'play', 'settings', 'template' event
-   argvs?: string[]; // used for 'play' event
+   argvs?: string[]; // used for 'play', 'settings' events
    options?: {}; // used for 'ssh', 'options' event
 }
 
@@ -70,6 +70,7 @@ export interface EventResponse {
 }
 export interface PlayScriptSettings {
    show_statistics?: boolean;
+   encrypt_source_code?: string;
 }
 
 export interface ExecResponse {
@@ -97,4 +98,10 @@ export interface TemplateOptions {
    templatePath?: string
    autoescape?: boolean;
    data?: object;
+}
+
+export interface SymbolicLinkInfo {
+   target: string;
+   path: string;
+   type: 'file' | 'dir';
 }

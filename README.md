@@ -26,6 +26,7 @@ you can add multiple scripts and load them to main play script. and you LOVE it 
 - [x] ssh: using `ssh2` nad can run ssh commands
 - [x] argvs: parse script argvs
 - [x] template: parse and render template string or file with `nunjucks` engine
+- [x] net: useful functions for network
 
 ## get-started
 

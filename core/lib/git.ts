@@ -67,7 +67,7 @@ export async function clone(options: {
    // =>set url
    command += await getAuthRemoteUrl(options.cloneUrl, options.username, options.password);
    // =>set branch
-   if (options.branch) command += options.branch + ' ';
+   if (options.branch) command += ' ' + options.branch + ' ';
    // =>set directory
    if (options.directory) command += options.directory;
    // console.log('command:', command);

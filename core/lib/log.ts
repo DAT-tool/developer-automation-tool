@@ -15,7 +15,7 @@ export function error(text: string | object, end = '\n') {
    }
 }
 /**************************************** */
-export function debug(text: string, type: 'info' | 'error' | 'warning' = 'error', end = '\n') {
+export function debug(text: string, type: 'info' | 'error' | 'warning' | 'normal' = 'error', end = '\n') {
    // =>check for debug mode, enabled
    if (!DebugMode) return;
    messageLog(text, type, end);

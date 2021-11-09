@@ -3,7 +3,7 @@ import * as PROCESS from 'process';
 import * as PATH from 'path';
 import * as FS from 'fs';
 import * as NET from 'net';
-import { CommandArgvModel, CommandRunArgv, ExecResponse, FileInfo } from "./interfaces";
+import { CommandArgvModel, CommandRunArgv, ExecResponse, FileInfo, SymbolicLinkInfo } from "./interfaces";
 import { ChildProcessWithoutNullStreams, spawn, SpawnOptions, SpawnOptionsWithoutStdio } from "child_process";
 import { ExitCode } from "./types";
 /************************************************************* */
@@ -91,24 +91,24 @@ export function warningLog(name: string, message: string) {
  * @param target 
  * @param justContents not copy source dir, just its content
  */
-export function copyFolderSync(source: string, target: string, justContents = false) {
+export function copyFolderSync(source: string, target: string, justContents = false, returnSymbolLinks = false) {
    if (!FS.lstatSync(source).isDirectory()) return;
    // Check if folder needs to be created or integrated
+   // console.log('tgggg:', source)
    let targetFolder = PATH.join(target, PATH.basename(source));
    if (justContents) targetFolder = target;
+   // =>create dir, if not exist
    if (!FS.existsSync(targetFolder)) {
       FS.mkdirSync(targetFolder, { recursive: true });
    }
-
    // Copy
-
    let files = FS.readdirSync(source, { withFileTypes: true });
    for (const f of files) {
       var curSource = PATH.join(source, f.name);
       var curDest = PATH.join(targetFolder, f.name);
       // =>if dir
       if (f.isDirectory()) {
-         copyFolderSync(curSource, curDest, true);
+         copyFolderSync(curSource, curDest, true, true);
       }
       // =>if file
       else {
@@ -116,15 +116,26 @@ export function copyFolderSync(source: string, target: string, justContents = fa
       }
 
    }
-
 }
 /************************************************************* */
-export async function copyDirectory(path: string, newPath: string, excludeFiles?: string[], excludeDirs?: string[]) {
+/**
+ * copy directory also support symbolic links
+ * @param path 
+ * @param newPath 
+ * @param excludeFiles 
+ * @param excludeDirs 
+ * @param returnSymbolLinks 
+ * @returns 
+ */
+export async function copyDirectoryAsync(path: string, newPath: string, excludeFiles?: string[], excludeDirs?: string[], returnSymbolLinks = false): Promise<boolean | SymbolicLinkInfo[]> {
+   let symbolLinks: { target: string; path: string; type: 'file' | 'dir' }[] = [];
    // =>create new directory
    FS.mkdirSync(newPath, { recursive: true });
    // =>list all files, dirs in path
    const files = FS.readdirSync(path, { withFileTypes: true });
    for (const f of files) {
+      var curSource = PATH.join(path, f.name);
+      var curDest = PATH.join(newPath, f.name);
       // =>if file
       if (f.isFile()) {
          // =>check not in exclude files
@@ -132,13 +143,42 @@ export async function copyDirectory(path: string, newPath: string, excludeFiles?
          // =>add file
          FS.copyFileSync(PATH.join(path, f.name), PATH.join(newPath, f.name));
       }
+      // =>if symbolic
+      else if (f.isSymbolicLink()) {
+         let symLinkPath = FS.readlinkSync(curSource);
+         let symType: 'file' | 'dir' = 'file';
+         if (FS.statSync(PATH.normalize(PATH.join(path, symLinkPath))).isDirectory()) {
+            symType = 'dir';
+         }
+         // =>check sym link is abs path
+         if (!PATH.isAbsolute(symLinkPath)) {
+            symLinkPath = PATH.normalize(PATH.join(newPath, symLinkPath));
+         }
+         // =>add symbol links list
+         symbolLinks.push({
+            target: symLinkPath,
+            path: curDest,
+            type: symType,
+         });
+      }
       //=> if dir
-      if (f.isDirectory()) {
+      else if (f.isDirectory()) {
          // =>check not in exclude dirs
          if (excludeDirs && excludeDirs.includes(f.name)) continue;
          // =>add folder
          FS.mkdirSync(PATH.join(newPath, f.name), { recursive: true });
-         await copyDirectory(PATH.join(path, f.name), PATH.join(newPath, f.name));
+         symbolLinks.push(...await copyDirectoryAsync(PATH.join(path, f.name), PATH.join(newPath, f.name), excludeFiles, excludeDirs, true) as []);
+      }
+   }
+   // =>if must to return symbol links
+   if (returnSymbolLinks) {
+      return symbolLinks;
+   } else {
+      // console.log(symbolLinks)
+      // =>copy all symbol links
+      for (const sym of symbolLinks) {
+         // console.log(path, sym.target, sym.path)
+         FS.symlinkSync(sym.target, sym.path, sym.type);
       }
    }
    return true;
