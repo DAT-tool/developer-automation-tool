@@ -50,11 +50,11 @@
 - [x] create net lib
 - [x] add 'copyDirectory' functions to os lib
 - [x] support copy directory for symbolic links
+- [x] can package DAT by pkg
 
 
 - [ ] create npm lib
 - [ ] add 'progress' function to log lib
-- [ ] can package DAT by nexe or pkg
 - [ ] upgrade 'make' command
 - [ ] create 'install-docker' script
 - [ ] create 'install-docker-compose' script

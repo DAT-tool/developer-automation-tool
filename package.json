@@ -1,7 +1,7 @@
 {
   "name": "dat-tool",
   "description": "Developer automation tool command cli",
-  "version": "0.4.4",
+  "version": "0.4.8",
   "author": "madkne",
   "keywords": [
     "automation",
@@ -29,7 +29,8 @@
     "build": "rm -rdf dist && tsc -b tsconfig.json ",
     "prepare": "npm run build",
     "start": "npm run build && node dist/index.js",
-    "dev": "concurrently \"tsc -b -w tsconfig.json\" \"nodemon dist/index.js\""
+    "dev": "concurrently \"tsc -b -w tsconfig.json\" \"nodemon dist/index.js\"",
+    "pkg": "npm run build && pkg . --compress GZip --options max_old_space_size=4096"
   },
   "dependencies": {
     "nunjucks": "^3.2.3",
@@ -43,5 +44,19 @@
     "@types/ssh2": "^0.5.48",
     "concurrently": "^5.3.0",
     "nodemon": "^2.0.4"
+  },
+  "pkg": {
+    "scripts": [
+      "dist/**/*.js"
+    ],
+    "assets": [
+      "dist/lib/**/*",
+      "dist/common/**/*"
+    ],
+    "targets": [
+      "node14-linux",
+      "node14-win"
+    ],
+    "outputPath": "dist"
   }
 }

@@ -1,5 +1,5 @@
 
-export const VERSION = "0.4.7";
+export const VERSION = "0.4.8";
 export const VERSION_NAME = 'BETA';
 
 const BETA_VERSION_STARTED = '2021.10.28';

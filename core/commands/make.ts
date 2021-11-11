@@ -137,11 +137,14 @@ ${playName} was built by DAT ${VERSION}
          // =>create types dir
          FS.mkdirSync(PATH.join(datPath, dir), { recursive: true });
          // =>create package.json file
-         FS.writeFileSync(PATH.join(Global.dirPath, dir, 'package.json'), JSON.stringify({ name: dir, dependencies: {} }, null, 2));
+         FS.writeFileSync(PATH.join(datPath, dir, 'package.json'), JSON.stringify({ name: dir, dependencies: {} }, null, 2));
+         // =>get dir path
+         let dirPath = PATH.join(Global.dirPath, dir);
          // =>get list of all type files
-         let types = await getFilesList(PATH.join(Global.dirPath, dir));
+         let types = await getFilesList(dirPath);
          for (const f of types) {
-            FS.copyFileSync(f.path, PATH.join(datPath, dir, PATH.basename(f.path)));
+            FS.writeFileSync(PATH.join(datPath, dir, PATH.basename(f.path)), FS.readFileSync(f.path));
+            // FS.copyFileSync(f.path, PATH.join(datPath, dir, PATH.basename(f.path)));
          }
       }
    }
