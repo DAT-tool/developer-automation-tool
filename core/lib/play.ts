@@ -3,7 +3,7 @@ import * as path from 'path';
 import { ExitCode } from '../common/types';
 import { checkGitInstalled, clone } from './git';
 import { error } from './log';
-import { connectDatSocket, cwd, rmdir } from './os';
+import { connectDatSocket, copyDirectory, cwd, rmdir } from './os';
 
 export interface GitPlayItem {
    name?: string; // needs for remove play item
@@ -103,11 +103,16 @@ export async function playFromGit<T extends string = string>(name: T, argvs: str
             username: item.username ? item.username : undefined,
             password: item.password ? item.password : undefined,
             depth: 1,
-            directory: gitPlayScriptPath,
-         });
+            deleteDirectoryIfNotEmpty: true,
+         }, gitPlayDirPath);
          // console.log(res)
          // =>check for status code
          if (res.code !== 0) continue;
+         // =>if branch defined, move from branch folder to root
+         if (options.branch && fs.existsSync(path.join(gitPlayDirPath, options.branch))) {
+            await copyDirectory(path.join(gitPlayDirPath, options.branch), gitPlayScriptPath);
+            await rmdir(path.join(gitPlayDirPath, options.branch));
+         }
          clonedScript = true;
          break;
       }

@@ -3,8 +3,9 @@ import * as http from 'http';
 import url from 'url';
 import * as os from 'os';
 import * as path from 'path';
-import { generateString } from "../common/public";
-import { cwd, exec } from "./os";
+import * as fs from 'fs';
+import { generateString, isDirEmpty } from "../common/public";
+import { cwd, exec, rmdir, } from "./os";
 import { error } from "./log";
 import { ExecResponse } from "../common/interfaces";
 import { ExitCode } from "../common/types";
@@ -50,30 +51,48 @@ export async function clone(options: {
    password?: string;
    branch?: string;
    depth?: number;
-   cwd?: string;
-   /**
-    * The name of a new directory to clone into.
-    */
-   directory?: string;
-}) {
+   quiet?: boolean;
+   configs?: object;
+   deleteDirectoryIfNotEmpty?: boolean;
+}, cwd?: string) {
    // =>check git installed
    if (!await checkGitInstalled()) return;
+   // =>check for dest dir
+   if (options.deleteDirectoryIfNotEmpty) {
+      let destPath = cwd;
+      if (!destPath) destPath = process.cwd();
+      if (options.branch) {
+         destPath = path.join(destPath, options.branch);
+      } else {
+         destPath = path.join(destPath, options.cloneUrl.split('/').pop());
+      }
+      // =>if dest path exist
+      if (fs.existsSync(destPath)) {
+         await rmdir(destPath);
+      }
+   }
    // =>parse url
    let q = new url.URL(options.cloneUrl);
    // =>generate command
    let command = `git clone `;
    // =>set depth
    if (options.depth) command += '--depth=' + options.depth + ' ';
+   // =>set quiet
+   if (options.quiet) command += '--quiet ';
+   // =>set configs
+   if (options.configs && typeof options.configs === 'object') {
+      for (const k of Object.keys(options.configs)) {
+         command += `--config ${k}="${options.configs[k]}" `;
+      }
+   }
    // =>set url
    command += await getAuthRemoteUrl(options.cloneUrl, options.username, options.password);
    // =>set branch
    if (options.branch) command += ' ' + options.branch + ' ';
-   // =>set directory
-   if (options.directory) command += options.directory;
-   // console.log('command:', command);
    // =>try to clone
-   let output = await exec(command, options.cwd);
+   let output = await exec(command, cwd);
 
+   console.log('command:', command, output);
    return output;
 }
 /****************************************** */

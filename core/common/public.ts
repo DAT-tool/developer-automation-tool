@@ -513,3 +513,8 @@ export async function mapRunProgramArguments<A extends string = string>(
 
    return runArgvs;
 }
+
+/************************************************************* */
+export function isDirEmpty(dirPath: string) {
+   return FS.readdirSync(dirPath).length === 0;
+}

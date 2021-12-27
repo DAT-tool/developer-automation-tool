@@ -54,8 +54,13 @@
 
 
 - [ ] create npm lib
+- [ ] run a play script from git via command
 - [ ] add 'progress' function to log lib
 - [ ] upgrade 'make' command
-- [ ] create 'install-docker' script
-- [ ] create 'install-docker-compose' script
+- [x] create 'install-docker' script
+- [x] create 'install-docker-compose' script
 - [ ] remove compiled play script after run
+- [ ] fix 'cp' function in docker lib
+- [ ] fix 'exec' function in docker lib
+- [x] fix 'clone' function in git
+- [ ] create 'install-i3' script
