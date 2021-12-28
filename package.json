@@ -1,7 +1,7 @@
 {
   "name": "dat-tool",
   "description": "Developer automation tool command cli",
-  "version": "0.4.9",
+  "version": "0.5.1",
   "author": "madkne",
   "keywords": [
     "automation",
@@ -26,10 +26,10 @@
     "dat": "./bin/dat.js"
   },
   "scripts": {
-    "build": "rm -rdf dist && tsc -b tsconfig.json ",
+    "build": "rm -rdf dist && tsc -b tsconfig.json && cp -r core/raw dist ",
     "prepare": "npm run build",
     "start": "npm run build && node dist/index.js",
-    "dev": "concurrently \"tsc -b -w tsconfig.json\" \"nodemon dist/index.js\"",
+    "dev": "concurrently \"tsc -b -w tsconfig.json\" \"cp -r core/raw dist && nodemon dist/index.js\"",
     "pkg": "npm run build && pkg . --compress GZip --options max_old_space_size=4096"
   },
   "dependencies": {

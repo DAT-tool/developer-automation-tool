@@ -51,16 +51,16 @@
 - [x] add 'copyDirectory' functions to os lib
 - [x] support copy directory for symbolic links
 - [x] can package DAT by pkg
+- [x] create 'install-docker' script
+- [x] create 'install-docker-compose' script
+- [x] fix 'clone' function in git
+- [x] run a play script from git via command
+- [x] fix 'cp' function in docker lib
+- [x] add 'progress' function to log lib
 
 
 - [ ] create npm lib
-- [ ] run a play script from git via command
-- [ ] add 'progress' function to log lib
 - [ ] upgrade 'make' command
-- [x] create 'install-docker' script
-- [x] create 'install-docker-compose' script
 - [ ] remove compiled play script after run
-- [ ] fix 'cp' function in docker lib
 - [ ] fix 'exec' function in docker lib
-- [x] fix 'clone' function in git
 - [ ] create 'install-i3' script

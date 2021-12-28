@@ -1,4 +1,4 @@
-# DAT - Developer Automation Tool (*V 0.4 - BETA*)
+# DAT - Developer Automation Tool (*V 0.5 - BETA*)
 
 DAT is a simple IT automation system for developers. It handles configuration management and application deployment.
 DAT can be run dependencies of your script.
@@ -44,6 +44,7 @@ you can add multiple scripts and load them to main play script. and you LOVE it 
 - you need one file:
   - play.ts: a play script that run your commands on typescript
 - and you have many libraries and other scripts than can play them!
+- you can also run a play script from git like `dat pg -n install-docker -a i`
 
 ## Authors
 

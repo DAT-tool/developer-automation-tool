@@ -16,6 +16,19 @@ export type argvName = 'name';
 /******************************************* */
 export class MakeCommand extends CommandClass<argvName> {
    path: string;
+   initWithPath = false;
+   verbose = 1;
+   /********************************** */
+   constructor(path?: string, verbose = 1) {
+      super();
+      if (path) {
+         this.path = path;
+         this.initWithPath = true;
+      }
+      if (verbose) {
+         this.verbose = verbose;
+      }
+   }
    /********************************** */
    define(): CommandModel<argvName> {
       return {
@@ -33,10 +46,12 @@ export class MakeCommand extends CommandClass<argvName> {
    }
    /********************************** */
    async run() {
-      if (this.hasArgv('name')) {
-         this.path = PATH.join(Global.pwd, this.getArgv('name'));
-      } else {
-         this.path = Global.pwd;
+      if (!this.initWithPath) {
+         if (this.hasArgv('name')) {
+            this.path = PATH.join(Global.pwd, this.getArgv('name'));
+         } else {
+            this.path = Global.pwd;
+         }
       }
       // =>create dir with path
       FS.mkdirSync(this.path, { recursive: true });
@@ -107,7 +122,9 @@ For debugging play script, you must install \`source-map-support\` package by ty
 ${playName} was built by DAT ${VERSION}
             `.trim());
          }
-         infoLog('make', `environment makes in '${this.path}' for '${playName}' play script`);
+         if (this.verbose >= 1) {
+            infoLog('make', `environment makes in '${this.path}' for '${playName}' play script`);
+         }
          return true;
       } catch (e) {
          errorLog('err4', e);
@@ -132,7 +149,7 @@ ${playName} was built by DAT ${VERSION}
          ],
       }, null, 2));
       // =>create dat dir
-      let dirs = ['lib', 'common'];
+      let dirs = ['lib', 'common', 'raw'];
       for (const dir of dirs) {
          // =>create types dir
          FS.mkdirSync(PATH.join(datPath, dir), { recursive: true });

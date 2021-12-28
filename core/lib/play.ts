@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { DATGitBaseURl } from '../common/public';
 import { ExitCode } from '../common/types';
 import { checkGitInstalled, clone } from './git';
 import { error } from './log';
@@ -15,7 +16,8 @@ export interface GitPlayItem {
 /***************************************** */
 export const GitPlayItems: GitPlayItem[] = [
    {
-      baseUrl: 'https://github.com/DAT-tool',
+      baseUrl: DATGitBaseURl(),
+      name: 'DAT',
    },
 ];
 /***************************************** */

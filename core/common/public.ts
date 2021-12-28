@@ -518,3 +518,24 @@ export async function mapRunProgramArguments<A extends string = string>(
 export function isDirEmpty(dirPath: string) {
    return FS.readdirSync(dirPath).length === 0;
 }
+/************************************************************* */
+export function DATGitBaseURl() {
+   return 'https://github.com/DAT-tool';
+}
+/************************************************************* */
+
+export async function getCursorPosition(showError = true) {
+   return new Promise<{ row: number, column: number; }>((res) => {
+      //FIXME: just for linux
+      require('child_process').exec('/bin/bash ' + PATH.join(__dirname, '..', 'raw', 'cursor-position.sh'), function (error, stdout, stderr) {
+         if (stderr) {
+            if (showError) {
+               errorLog('err34563', stderr);
+            }
+            res({ column: 0, row: 0 });
+         } else {
+            res(JSON.parse(stdout));
+         }
+      });
+   })
+}

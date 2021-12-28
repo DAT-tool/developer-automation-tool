@@ -67,8 +67,17 @@ export async function exec(container: string, command: string, options: { sudoPa
    return res;
 }
 /******************************************** */
-export async function cp(container: string, hostPath: string, containerPath: string, options: { sudoPassword?: string } = {}) {
-   let command = `docker cp ${hostPath} ${container}:${containerPath}`;
+export async function cp(container: string, hostPath: string, containerPath: string, options: { sudoPassword?: string, copyFromHost?: boolean } = { copyFromHost: true }) {
+   let command = '';
+   // =>if copy from host
+   if (options.copyFromHost) {
+      command = `docker cp ${hostPath} ${container}:${containerPath}`;
+   }
+   // =>if copy from container
+   else if (!options.copyFromHost) {
+      command = `docker cp ${container}:${containerPath} ${hostPath}`;
+   }
+
 
    // =>run command
    let res = await runDockerCommand(command, options.sudoPassword);

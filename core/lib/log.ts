@@ -61,3 +61,7 @@ export function clear() {
       process.stdout.cursorTo(0, 0);
    }
 }
+/**************************************** */
+export class ProgressBar extends CommandInput.CreateProgressBar {
+
+}

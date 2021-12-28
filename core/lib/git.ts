@@ -92,7 +92,7 @@ export async function clone(options: {
    // =>try to clone
    let output = await exec(command, cwd);
 
-   console.log('command:', command, output);
+   // console.log('command:', command, output);
    return output;
 }
 /****************************************** */

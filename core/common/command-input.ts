@@ -1,5 +1,6 @@
 import * as READLINE from 'readline';
-import { messageLog } from './public';
+import { ProgressBarOptions } from './interfaces';
+import { getCursorPosition, messageLog } from './public';
 
 
 export namespace CommandInput {
@@ -207,6 +208,119 @@ export namespace CommandInput {
          messageLog(`✗ ${text}`, 'error', end);
       } else {
          messageLog(`\u2609 ${text}`, 'info', end);
+      }
+   }
+   /**************************************** */
+   export class CreateProgressBar {
+      protected title: string;
+      protected options: ProgressBarOptions;
+      protected defaultOptions: ProgressBarOptions = { mode: 'basic', size: 100, label: '%' };
+      protected cursor = 0;
+      protected value = 0;
+      protected bgChar = '-';
+      protected forChar = '=';
+      protected yPosition = 0;
+      /**************************** */
+      constructor(title: string, options?: ProgressBarOptions) {
+         this.title = title;
+         if (options) {
+            this.options = options;
+         }
+         // =>fill options with defaults
+         for (const key of Object.keys(this.defaultOptions)) {
+            if (this.options[key] === undefined) this.options[key] = this.defaultOptions[key];
+         }
+         // =>check mode
+         switch (options.mode) {
+            case 'graphics1':
+               this.bgChar = '░';
+               this.forChar = '█';
+               break;
+            default:
+               this.bgChar = '-';
+               this.forChar = '=';
+               break;
+         }
+         process.stdout.write('\n');
+
+         this.update(0);
+      }
+      /**************************** */
+      async update(value: number, payload = {}) {
+         // =>check value by size
+         if (value < 0) value = 0;
+         else if (value > this.options.size) value = this.options.size;
+         this.value = value;
+         await this.render(payload);
+      }
+      /**************************** */
+      async increment(payload = {}) {
+         await this.update(this.value + 1, payload);
+      }
+      /**************************** */
+      async stop() {
+         // =>reset cursor on line
+         // READLINE.cursorTo(process.stdout, 0, this.yPosition);
+         process.stdout.write('\r\n');
+      }
+      /**************************** */
+      async render(payload = {}) {
+         // =>init vars
+         let terminalWidth = process.stdout.columns;
+         let maxProgressWidth = terminalWidth;
+         let valueRatio = this.value;
+         this.cursor = 0;
+         let showValue = '';
+         let payloadsString = '';
+         // =>get current position
+         let position = await getCursorPosition(false);
+         // =>check by last y position
+         if (position.row < this.yPosition) {
+            position.row = this.yPosition;
+         }
+         this.yPosition = position.row;
+         // =>set cursor on line
+         READLINE.cursorTo(process.stdout, 0, position.row);
+         // =>disable cursor
+         process.stdout.write("\x1B[?25l");
+         // =>write title
+         process.stdout.write(ansiColors(this.title + ' ', 'blue', true));
+         this.cursor = this.title.length + 1;
+         process.stdout.write("[");
+         maxProgressWidth -= this.cursor + 2;
+         this.cursor++;
+         // =>if show value
+         if (this.options.showValue) {
+            showValue = ` ${this.value}${this.options.label}`;
+            maxProgressWidth -= showValue.length;
+         }
+         // =>if has payload
+         let payloadKeys = Object.keys(payload);
+         for (let i = 0; i < payloadKeys.length; i++) {
+            if (i > 0 || (i === 0 && this.options.showValue)) {
+               payloadsString += ' |';
+            }
+            payloadsString += ` ${payloadKeys[i]}: ${payload[payloadKeys[i]]}`;
+         }
+         maxProgressWidth -= payloadsString.length;
+         // =>calculate value ratio
+         valueRatio = (valueRatio * maxProgressWidth) / this.options.size;
+         // =>fill with bg
+         for (let i = 0; i < maxProgressWidth; i++) {
+            process.stdout.write(this.bgChar);
+         }
+         process.stdout.write("]");
+         // =>print value
+         process.stdout.write(showValue);
+         // =>print payloads
+         process.stdout.write(payloadsString);
+
+         // =>set new cursor
+         READLINE.cursorTo(process.stdout, this.cursor, position.row);
+         // =>progress value
+         for (let i = 0; i < Math.ceil(valueRatio); i++) {
+            process.stdout.write(this.forChar);
+         }
       }
    }
 

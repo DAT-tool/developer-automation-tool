@@ -105,3 +105,10 @@ export interface SymbolicLinkInfo {
    path: string;
    type: 'file' | 'dir';
 }
+
+export interface ProgressBarOptions {
+   mode: 'basic' | 'graphics1';
+   showValue?: boolean;
+   size: number;
+   label: string;
+}
