@@ -60,7 +60,9 @@ export async function exec(container: string, command: string, options: { sudoPa
    // =>run command
    let res = await runDockerCommand(bashCommand, options.sudoPassword);
    // =>check response error, if exist
-   if (res.error && String(res.error).indexOf('Error: Command failed') > -1) {
+   // console.log('error:', String(res.result))
+   if ((res.error || res.result) && (String(res.error).indexOf('Error: Command failed') > -1 || String(res.result).indexOf('OCI runtime exec failed') > -1)) {
+      // console.log('gggg')
       // =>try with 'sh'
       res = await runDockerCommand(shCommand, options.sudoPassword);
    }
@@ -83,6 +85,24 @@ export async function cp(container: string, hostPath: string, containerPath: str
    let res = await runDockerCommand(command, options.sudoPassword);
 
    return res;
+}
+/******************************************** */
+export async function inspect(container: string, options: { sudoPassword?: string, key?: string; } = {}) {
+   let command = `docker inspect ${container}`;
+
+   try {
+      // =>run command
+      let res = await runDockerCommand(command, options.sudoPassword);
+      // =>parse result as json
+      let jsonInfo = JSON.parse(res.result);
+      // =>if key exist
+      if (options.key) {
+         return jsonInfo[0][options.key];
+      }
+      return jsonInfo;
+   } catch (e) {
+      return [];
+   }
 }
 /******************************************** */
 export async function run(imageName: string, options: {

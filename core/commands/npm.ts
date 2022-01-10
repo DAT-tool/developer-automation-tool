@@ -49,7 +49,7 @@ export class NpmCommand extends CommandClass<argvName> {
       this.packageName = this.getArgv('name');
       // =>check exist package name 
       if (!this.packageName) {
-         this.packageName = await CommandInput.question('Enter Package Name');
+         this.packageName = await CommandInput.question('Enter Package Name:');
       }
       // =>get npm action
       if (this.hasArgv('remove')) this.action = 'remove';

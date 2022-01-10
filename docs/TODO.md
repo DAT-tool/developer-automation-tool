@@ -57,10 +57,11 @@
 - [x] run a play script from git via command
 - [x] fix 'cp' function in docker lib
 - [x] add 'progress' function to log lib
+- [x] upgrade 'make' command
 
 
 - [ ] create npm lib
-- [ ] upgrade 'make' command
 - [ ] remove compiled play script after run
 - [ ] fix 'exec' function in docker lib
+- [x] create 'inspect' function in docker lib
 - [ ] create 'install-i3' script
