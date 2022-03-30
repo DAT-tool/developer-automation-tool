@@ -58,10 +58,14 @@
 - [x] fix 'cp' function in docker lib
 - [x] add 'progress' function to log lib
 - [x] upgrade 'make' command
+- [x] create 'inspect' function in docker lib
 
 
 - [ ] create npm lib
+- [ ] create cronjob lib
+- [ ] fix bug in 'clone' function of git lib
+- [ ] remove unused docker images in docker lib
+- [ ] create 'scanPorts' function in net lib
 - [ ] remove compiled play script after run
 - [ ] fix 'exec' function in docker lib
-- [x] create 'inspect' function in docker lib
 - [ ] create 'install-i3' script

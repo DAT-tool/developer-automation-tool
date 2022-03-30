@@ -52,3 +52,8 @@ export function simpleServer(port: number, request: (req: http.IncomingMessage, 
    // Start the server on port 
    app.listen(port, '0.0.0.0');
 }
+
+
+export function scanPorts() {
+   //https://github.com/alanhoff/node-portastic/blob/master/lib/portastic.js
+}

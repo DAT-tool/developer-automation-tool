@@ -27,17 +27,20 @@ you can add multiple scripts and load them to main play script. and you LOVE it 
 - [x] argvs: parse script argvs
 - [x] template: parse and render template string or file with `nunjucks` engine
 - [x] net: useful functions for network
+- [ ] cronjob: functions for using cronjobs
 
 ## get-started
 
 - install node.js 12 or higher
 - install with npm: `npm i dat-tool -g`
+- when you install dat-tool, get permission denied error:
+  - on Linux: `sudo chown -R $(whoami) $(npm config get prefix)/{lib/node_modules,bin,share}`
 
 ## hello world! sample
 
-- `dat make first_play`
+- `dat m -n first_play`
 - `cd first_play`
-- `dat play`
+- `dat p`
 
 ## Roadmap
 
