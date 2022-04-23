@@ -59,6 +59,9 @@
 - [x] add 'progress' function to log lib
 - [x] upgrade 'make' command
 - [x] create 'inspect' function in docker lib
+- [x] add boolean input to input lib
+- [x] add removeEntries function to os lib
+- [x] check dat version
 
 
 - [ ] create npm lib
@@ -69,3 +72,4 @@
 - [ ] remove compiled play script after run
 - [ ] fix 'exec' function in docker lib
 - [ ] create 'install-i3' script
+- [ ] run multiple files from play script

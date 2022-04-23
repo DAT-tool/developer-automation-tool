@@ -12,6 +12,8 @@ import { ExitCode } from '../common/types';
 import { SSHConnection } from './ssh';
 import { TemplateParser } from './template';
 import { CommandInput } from '../common/command-input';
+import { VERSION, VERSION_NUMBER } from '../version';
+import { error } from '../lib/log';
 
 export class PlayScript {
    path: string;
@@ -154,6 +156,25 @@ exports.initialize = initialize;
          return ExitCode.FAILED_IMPORT;
       }
 
+   }
+   /**************************************** */
+   async checkRequiredVersion() {
+      // =>get current version number
+      let currentVersionNumber = VERSION_NUMBER();
+      // =>get required version number
+      let requiredVersionNumber = VERSION_NUMBER(this.settings.require_version);
+      // console.log(currentVersionNumber, requiredVersionNumber, this.settings.require_version_mode, requiredVersionNumber >= currentVersionNumber)
+      // =>decide by mode
+      switch (this.settings.require_version_mode) {
+         case 'exact':
+            return requiredVersionNumber === currentVersionNumber;
+         case 'exactOrBigger':
+            return currentVersionNumber >= requiredVersionNumber;
+         case 'exactOrSmaller':
+            return currentVersionNumber <= requiredVersionNumber;
+         default:
+            return false;
+      }
    }
    /**************************************** */
    showPlayStatistics() {
@@ -384,6 +405,17 @@ exports.initialize = initialize;
          this.settings.encrypt_source_code = argvs[0];
          // =>if want to encrypt play file
          new SourceCodeEncryption(this.settings.encrypt_source_code).encryptFile(this.path, PATH.join(this.pwd, this.filenameWithoutExt + '.enc.ts'));
+         return ExitCode.SUCCESS;
+      }
+      // =>if check dat version
+      else if (name === 'require_version') {
+         this.settings.require_version = argvs[0];
+         this.settings.require_version_mode = argvs[1] as any;
+         // =>check dat version
+         if (!await this.checkRequiredVersion()) {
+            error(`invalid DAT version! (required: v${this.settings.require_version}, current: v${VERSION})`);
+            return ExitCode.INVALID_VERSION;
+         }
          return ExitCode.SUCCESS;
       }
       //TODO:

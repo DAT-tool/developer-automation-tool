@@ -21,3 +21,16 @@ export async function encryptSourceCode(password: string): Promise<EventResponse
 
    return res;
 }
+/****************************************** */
+/**
+ * check dat version
+ * @param version like 0.3.5
+ * @param mode 
+ * @returns 
+ */
+export async function requireVersion(version: string, mode: 'exact' | 'exactOrBigger' | 'exactOrSmaller' = 'exact') {
+   let res = await connectDatSocket({ event: 'settings', name: 'require_version', argvs: [version, mode] });
+   if (res.data) res.data = String(res.data);
+
+   return res;
+}

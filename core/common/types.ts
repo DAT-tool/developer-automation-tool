@@ -32,5 +32,6 @@ export enum ExitCode {
    INVALID_OPTION = 45,
    FAILED_IMPORT = 46,
    FAILED_COMPILE = 47,
+   INVALID_VERSION = 48,
 
 }

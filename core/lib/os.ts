@@ -200,12 +200,75 @@ export async function connectDatSocket(event: EventData): Promise<EventResponse>
    });
 }
 /***************************************** */
-export async function rmdir(path) {
+export async function rmdir(path: string) {
    if (fs.existsSync(path)) {
       fs.rmdirSync(path, { recursive: true });
       return true;
    }
    return false;
+}
+/***************************************** */
+/**
+ * 
+ * @param basePath 
+ * @param entries like package.json or *.map
+ * @returns boolean
+ */
+export async function removeEntries(basePath: string, entries: string[]) {
+   try {
+
+      if (!fs.existsSync(basePath)) return false;
+      // =>scan base path
+      let pathEntries = fs.readdirSync(basePath, { withFileTypes: true });
+      // =>iterate entries
+      for (const en of entries) {
+         // =>find entry by name
+         let matchEntry = pathEntries.find(i => i.name === en);
+         if (!matchEntry) continue;
+         // =>if entry is dir
+         if (matchEntry.isDirectory()) {
+            await rmdir(path.join(basePath, en));
+         }
+         // =>if entry is file
+         else if (matchEntry.isFile() || matchEntry.isSymbolicLink()) {
+            await fs.unlinkSync(path.join(basePath, en));
+         }
+      }
+      // =>if has star (*)
+      if (entries.find(i => i.startsWith('*'))) {
+         // =>iterate entries
+         for (const en of pathEntries) {
+            // =>check match entry by name
+            let isMatchEntry = entries.find(entry => {
+               if (entry.startsWith('*')) {
+                  let sp = entry.split('.');
+                  let enSp = en.name.split('.');
+                  if (enSp.length !== sp.length) return false;
+                  for (let i = 0; i < sp.length; i++) {
+                     if (sp[i] === '*') continue;
+                     if (sp[i] !== enSp[i]) return false;
+                  }
+                  return true;
+               }
+               return false;
+            });
+            if (!isMatchEntry) continue;
+            // =>if entry is dir
+            if (en.isDirectory()) {
+               await rmdir(path.join(basePath, en.name));
+            }
+            // =>if entry is file
+            else if (en.isFile() || en.isSymbolicLink()) {
+               await fs.unlinkSync(path.join(basePath, en.name));
+            }
+         }
+      }
+
+
+      return true;
+   } catch (e) {
+      return false;
+   }
 }
 /***************************************** */
 export function randomString(length = 10, includeNumbers = true, includeChars = true) {

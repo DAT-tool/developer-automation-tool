@@ -71,6 +71,8 @@ export interface EventResponse {
 export interface PlayScriptSettings {
    show_statistics?: boolean;
    encrypt_source_code?: string;
+   require_version?: string;
+   require_version_mode?: 'exact' | 'exactOrBigger' | 'exactOrSmaller';
 }
 
 export interface ExecResponse {

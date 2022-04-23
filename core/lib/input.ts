@@ -12,3 +12,18 @@ export async function input(text: string, defaultValue?: string): Promise<string
 export async function password(text: string): Promise<string> {
    return await CommandInput.askPassword(text);
 }
+/****************************************** */
+export async function boolean(text: string, defaultValue?: boolean): Promise<boolean> {
+   let options = '[Y/n]';
+   if (!defaultValue) {
+      options = '[y/N]';
+   }
+   options = CommandInput.ansiColors(options, 'yellow');
+   let res = await CommandInput.question(`${text} ${options}`, String(defaultValue));
+   let result = false;
+   if (res.toLowerCase() === 'y') result = true;
+   if (res === undefined || res.trim() === '') {
+      result = defaultValue;
+   }
+   return result;
+}
