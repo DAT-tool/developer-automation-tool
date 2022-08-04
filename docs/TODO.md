@@ -65,6 +65,7 @@
 - [x] support multi files
 - [x] upgrade cli commands in argvs lib
 - [x] add request function to net lib
+- [x] add `discovery` command
 
 - [ ] create npm lib
 - [ ] create cronjob lib

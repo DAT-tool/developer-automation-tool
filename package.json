@@ -1,7 +1,7 @@
 {
   "name": "dat-tool",
   "description": "Developer automation tool command cli",
-  "version": "0.5.3",
+  "version": "0.5.8",
   "author": "madkne",
   "keywords": [
     "automation",

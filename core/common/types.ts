@@ -1,5 +1,5 @@
 
-export type CommandType = 'help' | 'play' | 'version' | 'make' | 'npm' | 'play-from-git';
+export type CommandType = 'help' | 'play' | 'version' | 'make' | 'npm' | 'play-from-git' | 'discovery';
 
 export type baseArgvName = 'debug';
 

@@ -28,12 +28,12 @@ export class PlayCommand extends CommandClass<argvName> {
          argvs: [
             {
                name: 'filepath',
-               alias: 'f',
+               alias: '#f',
                description: "relative or absolute path of play script file",
             },
             {
                name: 'password',
-               alias: 'p',
+               alias: '#p',
                description: "password of encrypted play file",
             },
          ],
