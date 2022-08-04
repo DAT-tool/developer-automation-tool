@@ -1,3 +1,4 @@
+import { CommandClass } from "../common/command";
 import { CommandRunArgv } from "../common/interfaces";
 import { mapRunProgramArguments, parseProgramArgvs } from "../common/public";
 import { info, log, success, warning } from "./log";
@@ -12,6 +13,7 @@ export interface CommandItem<N extends string = string, A extends string = strin
    alias?: string;
    implement: () => Promise<boolean | void>;
    argvs?: CommandArgvItem<A>[];
+   commandClass?: CliCommand;
 }
 
 export interface CommandArgvItem<A extends string = string> {
@@ -25,7 +27,17 @@ export interface CommandArgvItem<A extends string = string> {
 /**************************************** */
 let scriptCommands: CommandItem[] = [];
 let scriptRunArgvs: CommandRunArgv[] = [];
+const cliCommandItems: { constructor: typeof CliCommand }[] = [];
 /**************************************** */
+/**
+ * define some commands for cli
+ * use `cli` function instead
+ * @param commands 
+ * @param notFoundCommand 
+ * @param notFoundArgv 
+ * @returns 
+ * @deprecated
+ */
 export async function define<N extends string = string, A extends string = string>(
    commands: CommandItem<N, A>[],
    notFoundCommand?: () => Promise<void>,
@@ -100,6 +112,8 @@ export async function define<N extends string = string, A extends string = strin
 
    return result ? true : false;
 }
+
+
 /**************************************** */
 export function getArgv<T = string, N extends string = string>(key: BaseArgvName | N, def?: T): T {
    const argv = scriptRunArgvs.find(i => i.key === key);
@@ -150,4 +164,146 @@ async function helpArgv(command: CommandItem) {
       log(argv.description);
    }
    return true;
+}
+/**************************************** */
+/*****************CLASS****************** */
+/**************************************** */
+/**
+ * load cli
+ * @returns boolean
+ */
+export async function cli(): Promise<boolean> {
+   scriptCommands = [];
+   // console.log('registered commands:', cliCommandItems);
+   for (const com of cliCommandItems as any) {
+      let commandClass = (new com.constructor);
+      let command: CommandItem = {
+         name: commandClass.name,
+         description: commandClass.description || '',
+         alias: commandClass.alias || undefined,
+         implement: commandClass.implement,
+         argvs: commandClass.argvs || [],
+         commandClass,
+      };
+      // =>add common argvs
+      if (!command.argvs.find(i => i.name === 'help')) {
+         command.argvs.push({
+            name: 'help',
+            alias: 'h',
+            description: 'Shows a help message for this command in the console.',
+         });
+      }
+      scriptCommands.push(command);
+   }
+   // =>if not find 'help' command
+   if (!scriptCommands.find(i => i.name === 'help')) {
+      scriptCommands.push({
+         name: 'help',
+         description: 'Lists available commands and their short descriptions.',
+         implement: async () => await helpCommand(),
+         argvs: [],
+      });
+   }
+
+   // =>if not found command name
+   if (ScriptArgvs.length < 1) {
+      ScriptArgvs.push('help');
+   }
+   // =>if help commands
+   else if (ScriptArgvs[0] === '-h' || ScriptArgvs[0] === '--help') {
+      ScriptArgvs[0] = 'help';
+   }
+   // =>parse script command
+   let runCommand: CommandItem;
+   for (const com of scriptCommands) {
+      // =>check name
+      if (com.name === ScriptArgvs[0]) {
+         runCommand = com;
+         break;
+      }
+      // =>check alias
+      else if (com.alias === ScriptArgvs[0]) {
+         runCommand = com;
+         // =>not break, probably is a name command
+      }
+   }
+   // =>if not found command
+   if (!runCommand) {
+      runCommand = scriptCommands.find(i => i.name === 'help');
+   }
+   // =>parse script argvs
+   scriptRunArgvs = parseProgramArgvs(ScriptArgvs.slice(1));
+   // =>map and set default argvs
+   scriptRunArgvs = await mapRunProgramArguments(scriptRunArgvs, runCommand.argvs);
+
+   // console.log(ScriptArgvs.slice(1), scriptRunArgvs, runCommand.argvs)
+   // =>if help argv
+   if (hasArgv('help')) {
+      helpArgv(runCommand);
+      return true;
+   }
+   let result = false;
+   // =>run command
+   if (runCommand.commandClass) {
+      result = await runCommand.commandClass.implement();
+   } else {
+      result = await runCommand.implement() as boolean;
+   }
+
+   return result ? true : false;
+}
+
+export interface OnImplement {
+   implement(): Promise<boolean> | boolean;
+}
+
+
+export class CliCommand<NAME extends string = string, ARG_NAME extends string = string> implements OnImplement {
+   private _name: NAME;
+   private _description: string;
+   private _alias: string;
+   private _argvs: CommandArgvItem<ARG_NAME>[];
+   constructor() {
+      // console.log('hrello')
+   }
+
+   get name(): NAME {
+      return this._name;
+   }
+
+   get description() {
+      return this._description;
+   }
+
+   get alias() {
+      return this._alias;
+   }
+
+   get argvs() {
+      return this._argvs;
+   }
+
+   hasArgv(name: ARG_NAME) {
+      return hasArgv(name);
+   }
+
+   getArgv<T = string>(name: ARG_NAME, def?: T) {
+      return getArgv<T, ARG_NAME>(name, def);
+   }
+
+   async implement(): Promise<boolean> {
+      return false;
+   }
+
+}
+/**************************************** */
+/**************DECORATORS**************** */
+/**************************************** */
+
+export function cliCommandItem() {
+   return (constructor: any) => {
+      cliCommandItems.push({
+         constructor,
+      });
+   };
 }

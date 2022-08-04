@@ -16,6 +16,25 @@ import { VERSION, VERSION_NUMBER } from '../version';
 import { error } from '../lib/log';
 
 export class PlayScript {
+   static defaultTypeScriptCompilerOptions: TS.CompilerOptions = {
+      // target: TS.ScriptTarget.ES2016,
+      // module: TS.ModuleKind.CommonJS,
+      target: "ES6" as any,
+      module: "CommonJS" as any,
+      declaration: false,
+      removeComments: true,
+      importHelpers: false,
+      strict: false,
+      types: ['node'],
+      resolveJsonModule: true,
+      disableSizeLimit: true,
+      experimentalDecorators: true,
+      // moduleResolution: TS.ModuleResolutionKind.NodeJs,
+      moduleResolution: "Node" as any,
+      inlineSourceMap: true,
+      emitDecoratorMetadata: true,
+      checkJs: true,
+   };
    path: string;
    buildPath: string;
    tmpPlayPath: string;
@@ -206,10 +225,9 @@ exports.initialize = initialize;
       try {
          // console.log(Global.dirPath, Global.pwd)
          const options: TS.CompilerOptions = {
-            target: TS.ScriptTarget.ES5,
+            target: TS.ScriptTarget.ES2016,
             module: TS.ModuleKind.CommonJS,
             declaration: false,
-            sourceMap: true,
             removeComments: true,
             importHelpers: false,
             strict: false,
@@ -218,6 +236,7 @@ exports.initialize = initialize;
             outDir: this.buildPath,
             resolveJsonModule: true,
             disableSizeLimit: true,
+            experimentalDecorators: true,
             moduleResolution: TS.ModuleResolutionKind.NodeJs,
             inlineSourceMap: true,
             emitDecoratorMetadata: true,
@@ -384,7 +403,7 @@ exports.initialize = initialize;
       }
       // =>if not find
       else {
-         console.log(this.pwd, name)
+         // console.log(this.pwd, name)
          return 10;
       }
       // =>create instance of play class

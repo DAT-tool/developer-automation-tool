@@ -114,3 +114,30 @@ export interface ProgressBarOptions {
    size: number;
    label: string;
 }
+
+export interface EnvFileOptions {
+   path?: string;
+   override?: boolean;
+   debug?: boolean;
+}
+
+export interface RequestOptions {
+   url: string;
+   /**
+    * @default GET
+    */
+   method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
+   headers?: object;
+   /**
+    * @default application/json
+    */
+   contentType?: 'application/json' | string;
+   body?: object;
+}
+
+export interface RequestResponse<T = any> {
+   data?: T;
+   error?: any;
+   status: number;
+   success: boolean;
+}

@@ -8,6 +8,7 @@ import * as FS from 'fs';
 import { Global } from "../global";
 import { VERSION } from "../version";
 import { CommandInput } from '../common/command-input';
+import { PlayScript } from '../runtime/play';
 
 export function init() {
    return { class: MakeCommand, alias: 'm' };
@@ -250,6 +251,12 @@ package-lock.json
                errorLog('make', `environment failed to update in '${this.path}'`);
             }
             return false;
+         }
+         // =>create 'tsconfig.json' file
+         if (!FS.existsSync(PATH.join(this.path, 'tsconfig.json'))) {
+            FS.writeFileSync(PATH.join(this.path, 'tsconfig.json'), JSON.stringify({
+               compilerOptions: PlayScript.defaultTypeScriptCompilerOptions,
+            }, null, 2));
          }
 
          if (this.verbose >= 1) {

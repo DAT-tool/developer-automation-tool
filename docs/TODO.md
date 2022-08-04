@@ -62,7 +62,9 @@
 - [x] add boolean input to input lib
 - [x] add removeEntries function to os lib
 - [x] check dat version
-
+- [x] support multi files
+- [x] upgrade cli commands in argvs lib
+- [x] add request function to net lib
 
 - [ ] create npm lib
 - [ ] create cronjob lib
