@@ -3,6 +3,7 @@ import * as path from "path";
 import * as http from "http";
 import * as https from "https";
 import { RequestOptions, RequestResponse } from "../common/interfaces";
+import { debug } from "./log";
 
 export async function downloadFile(url: string, destPath: string): Promise<true | Error> {
    return new Promise((res) => {
@@ -58,6 +59,7 @@ export async function request<T = any>(options: RequestOptions): Promise<Request
    const parseUrl = new URL(options.url);
    // =>set defaults
    if (!options.method) options.method = 'GET';
+   if (!options.timeout) options.timeout = 30000;
    if (!options.contentType) options.contentType = 'application/json';
    if (!options.headers) options.headers = {};
    let headers = {
@@ -65,24 +67,29 @@ export async function request<T = any>(options: RequestOptions): Promise<Request
       ...options.headers,
    };
    if (!options.body) options.body = {};
+   let queryParams = '';
    if (options.method === 'GET') {
       for (const key of Object.keys(options.body)) {
          parseUrl.searchParams.append(key, options.body[key]);
       }
+      queryParams = parseUrl.search.toString();
    }
    let requestOptions: http.RequestOptions = {
       host: parseUrl.hostname,
       port: parseUrl.port,
       protocol: parseUrl.protocol,
-      path: parseUrl.pathname,
+      path: parseUrl.pathname + queryParams,
       method: options.method,
       headers,
+      timeout: options.timeout,
    };
+   debug(JSON.stringify(requestOptions), 'warning');
    // console.log('options:', options, post_data);
    return new Promise((resolve) => {
+      let response: RequestResponse;
       var requestInstance = http.request(requestOptions, (res) => {
          let data = '';
-         let response: RequestResponse = {
+         response = {
             status: res.statusCode,
             success: false,
          };
@@ -108,13 +115,16 @@ export async function request<T = any>(options: RequestOptions): Promise<Request
          });
 
       }).on("error", (err) => {
+         response.error = err;
          console.log("Error: ", err.message);
       });
       // post the data
-      if (options.contentType === 'application/json') {
-         requestInstance.write(JSON.stringify(options.body));
-      } else if (options.method !== 'GET') {
-         requestInstance.write(options.body);
+      if (options.method !== 'GET') {
+         if (options.contentType === 'application/json') {
+            requestInstance.write(JSON.stringify(options.body));
+         } else {
+            requestInstance.write(options.body);
+         }
       }
       requestInstance.end();
    });

@@ -133,11 +133,15 @@ export interface RequestOptions {
     */
    contentType?: 'application/json' | string;
    body?: object;
+   /**
+    * @default 30000
+    */
+   timeout?: number;
 }
 
 export interface RequestResponse<T = any> {
    data?: T;
-   error?: any;
+   error?: Error;
    status: number;
    success: boolean;
 }
