@@ -92,6 +92,7 @@ export namespace CommandInput {
       return new Promise(res => {
          rl.question(ansiColors('? ', 'green') + ansiColors(text, 'normal', true), function (input) {
             rl.close();
+            // console.log('input:', input, input.trim().length, def)
             if (def && (!input || input.trim().length < 1)) input = def;
             res(input);
          });

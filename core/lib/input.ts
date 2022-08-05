@@ -20,9 +20,10 @@ export async function boolean(text: string, defaultValue?: boolean): Promise<boo
    }
    options = CommandInput.ansiColors(options, 'yellow');
    let res = await CommandInput.question(`${text} ${options}`, String(defaultValue));
+   // console.log('res:', res);
    let result = false;
-   if (res.toLowerCase() === 'y') result = true;
-   if (res === undefined || res.trim() === '') {
+   if (res.toLowerCase() === 'y' || res === 'true') result = true;
+   else if (res === undefined || res.trim() === '') {
       result = defaultValue;
    }
    return result;
